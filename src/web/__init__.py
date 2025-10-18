@@ -38,6 +38,16 @@ def _is_secure_connection(request_obj: Request) -> bool:
         logger.debug(f"Access allowed: localhost connection from {remote_addr}")
         return True
 
+    # SECURITY FIX: Only trust X-Forwarded-Proto if connection is from localhost
+    # This prevents header spoofing from external connections
+    # In production, nginx should be on localhost connecting via Unix socket
+    if remote_addr not in ("127.0.0.1", "::1", "localhost"):
+        logger.warning(
+            f"Access denied: non-localhost connection attempting to use proxy headers - "
+            f"Remote: {remote_addr}"
+        )
+        return False
+
     # Check if behind HTTPS reverse proxy (nginx with SSL certificate)
     forwarded_proto = request_obj.headers.get("X-Forwarded-Proto", "").lower()
     if forwarded_proto == "https":
