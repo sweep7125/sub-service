@@ -1,0 +1,34 @@
+{
+    "Name": "Simple",
+    "GlobalProxy": "true",
+    "UseChunkFiles": "true",
+    "RemoteDNSType": "DoH",
+    "RemoteDNSDomain": "https://one.one.one.one/dns-query",
+    "RemoteDNSIP": "1.0.0.1",
+    "DomesticDNSType": "DoU",
+    "DomesticDNSDomain": "https://common.dot.dns.yandex.net/dns-query",
+    "DomesticDNSIP": "77.88.8.1",
+    "Geoipurl": "https://raw.githubusercontent.com/sweep7125/rulesets/xray-rulesets/geoip.dat",
+    "Geositeurl": "https://raw.githubusercontent.com/sweep7125/rulesets/xray-rulesets/geosite.dat",
+    "LastUpdated": "",
+    "DnsHosts": {},
+    "DirectSites": [
+        "geosite:category-ru"
+    ],
+    "DirectIp": [
+        "geoip:private",
+        "geoip:ru"
+    ],
+    "ProxySites": [
+        "geosite:category-ban-ru"
+    ],
+    "ProxyIp": [
+        "geoip:category-ban-ru"
+    ],
+    "BlockSites": [
+      "geosite:private"
+    ],
+    "BlockIp": [],
+    "DomainStrategy": "IPIfNonMatch",
+    "FakeDNS": "false"
+}

@@ -1,0 +1,59 @@
+# ============================================================================
+# USERS DATABASE - База данных пользователей
+# ============================================================================
+# 
+# Формат: uuid | short_id | link_path | comment | groups
+#
+# Поля (разделитель: |):
+#   uuid       - UUID пользователя для VPN подключения (обязательно)
+#   short_id   - Short ID для Reality протокола (обязательно)
+#   link_path  - Путь для персональной ссылки подписки (обязательно, уникально)
+#   comment    - Имя/комментарий пользователя (опционально)
+#   groups     - Группы доступа через запятую (опционально, по умолчанию: default)
+#
+# Примечания:
+#   - Строки начинающиеся с # игнорируются (комментарии)
+#   - Пустые строки игнорируются
+#   - Если группы не указаны, пользователь попадает в группу "default"
+#   - Группы регистрозависимы: Premium != premium
+#   - link_path используется в URL: https://domain.com/<secret>/<link_path>
+#
+# Группы:
+#   default  - Базовая группа, доступ к стандартным серверам
+#   premium  - Премиум группа, доступ к быстрым серверам
+#   vip      - VIP группа, доступ ко всем серверам
+#   family   - Семейная группа
+#   test     - Тестовые пользователи
+#
+# ============================================================================
+
+# === PREMIUM USERS ===
+xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx | xxxxxxxxxxxxxxxx | premium_user1  | Premium User 1 | premium,vip
+xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx | xxxxxxxxxxxxxxxx | premium_user2  | Premium User 2 | premium
+
+# === STANDARD USERS ===
+xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx | xxxxxxxxxxxxxxxx | standard_user1 | Standard User 1 | default
+xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx | xxxxxxxxxxxxxxxx | standard_user2 | Standard User 2 | default
+xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx | xxxxxxxxxxxxxxxx | family_user1   | Family User 1   | default,family
+
+# === FAMILY GROUP ===
+xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx | xxxxxxxxxxxxxxxx | family_user2   | Family User 2   | family
+xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx | xxxxxxxxxxxxxxxx | family_user3   | Family User 3   | family
+
+# === TEST USERS ===
+xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx | xxxxxxxxxxxxxxxx | test_user1     | Test User 1     | test
+
+# ============================================================================
+# Примеры добавления новых пользователей:
+# ============================================================================
+#
+# Новый стандартный пользователь:
+# xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx | xxxxxxxxxxxxxxxx | username123 | Имя Фамилия | default
+#
+# Премиум пользователь с несколькими группами:
+# xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx | xxxxxxxxxxxxxxxx | premium_usr | Premium User | premium,vip
+#
+# Пользователь без групп (автоматически в default):
+# xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx | xxxxxxxxxxxxxxxx | simple_user | Простой юзер |
+#
+# ============================================================================

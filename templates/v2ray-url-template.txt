@@ -1,0 +1,1 @@
+vless://<ID>@<ADDRESS>:443?security=reality&encryption=none&pbk=<PBK>&headerType=none&fp=chrome&spx=<SPIDERX>&type=tcp&flow=xtls-rprx-vision&sni=<SERVERNAME>&sid=<SHORTID>#<NAME>

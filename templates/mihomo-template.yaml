@@ -1,0 +1,204 @@
+mixed-port: 7890
+mode: rule
+log-level: silent
+allow-lan: false
+ipv6: false
+unified-delay: true
+tcp-concurrent: true
+disable-keep-alive: true
+
+tun:
+  enable: true
+  stack: system
+  auto-route: true
+  auto-detect-interface: true
+  dns-hijack:
+    - any:53
+    - tcp://any:53
+  strict-route: true
+  route-exclude-address:
+    - 224.0.0.0/3
+    - 0.0.0.0/8
+    - 10.0.0.0/8
+    - 127.0.0.0/8
+    - 100.64.0.0/10
+    - 172.16.0.0/12
+    - 198.18.0.0/15
+    - 169.254.0.0/16
+    - 192.168.0.0/16
+    - 192.0.0.0/24
+    - 192.0.2.0/24
+    - 192.88.99.0/24
+    - 198.51.100.0/24
+    - 203.0.113.0/24
+    - fc00::/7
+    - ff00::/8
+    - fe80::/10
+    - ::/127
+
+dns:
+  enable: true
+  use-hosts: true
+  use-system-hosts: true
+  ipv6: false
+  enhanced-mode: redir-host
+  default-nameserver:
+    - tls://77.88.8.1
+    - system
+  proxy-server-nameserver:
+    - tls://77.88.8.1
+    - system
+  direct-nameserver:
+    - system
+  nameserver:
+    - https://one.one.one.one/dns-query#PROXY
+
+sniffer:
+  enable: true
+  override-destination: false
+  sniff:
+    HTTP:
+      ports: [80, "8080-8880"]
+    TLS:
+      ports: [443, 8443]
+  skip-dst-address:
+    - 224.0.0.0/3
+    - 0.0.0.0/8
+    - 10.0.0.0/8
+    - 127.0.0.0/8
+    - 100.64.0.0/10
+    - 172.16.0.0/12
+    - 198.18.0.0/15
+    - 169.254.0.0/16
+    - 192.168.0.0/16
+    - 192.0.0.0/24
+    - 192.0.2.0/24
+    - 192.88.99.0/24
+    - 198.51.100.0/24
+    - 203.0.113.0/24
+    - fc00::/7
+    - ff00::/8
+    - fe80::/10
+    - ::/127
+
+find-process-mode: strict
+
+profile:
+  store-selected: false
+  store-fake-ip: false
+
+proxy-template:
+  name: ""
+  type: vless
+  server: ""
+  port: 443
+  ip-version: ipv4
+  uuid: ""
+  network: tcp
+  tls: true
+  udp: true
+  tfo: true
+  flow: xtls-rprx-vision
+  servername: ""
+  reality-opts:
+    public-key: ""
+    short-id: ""
+    support-x25519mlkem768: true
+  client-fingerprint: random
+
+proxy-groups:
+  - name: "\U0001F6E1\uFE0F VPN"
+    icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Hijacking.png"
+    type: select
+    proxies: ["\u26A1\uFE0F Авто"]
+    include-all: true
+    url: "https://www.gstatic.com/generate_204"
+  - name: "\U0001F30D По умолчанию"
+    icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Global.png"
+    type: select
+    proxies: ["\U0001F513 Без VPN", "\U0001F6E1\uFE0F VPN"]
+  - name: "\u26A1\uFE0F Авто"
+    type: url-test
+    tolerance: 150
+    url: "https://www.gstatic.com/generate_204"
+    interval: 300
+    include-all-proxies: true
+    hidden: true
+  - name: "PROXY"
+    type: select
+    hidden: true
+    proxies: ["\U0001F6E1\uFE0F VPN"]
+  - name: "\U0001F513 Без VPN"
+    type: select
+    hidden: true
+    proxies: ["DIRECT"]
+  - name: "\u26D4 Блок"
+    type: select
+    hidden: true
+    proxies: ["REJECT"]
+  - name: "\u23ED\uFE0F Пропуск"
+    type: select
+    hidden: true
+    proxies: ["PASS"]
+
+rule-providers:
+  torrent-clients:
+    type: http
+    behavior: classical
+    format: yaml
+    url: "https://raw.githubusercontent.com/legiz-ru/mihomo-rule-sets/main/other/torrent-clients.yaml"
+    path: "./ruleset/torrent-clients.yaml"
+    interval: 86400
+  private-ips:
+    type: http
+    behavior: ipcidr
+    format: mrs
+    url: "https://raw.githubusercontent.com/sweep7125/rulesets/refs/heads/mihomo-rulesets/geoip-private.mrs"
+    path: "./ruleset/geoip-private.mrs"
+    interval: 2592000
+  private-domains:
+    type: http
+    behavior: domain
+    format: mrs
+    url: "https://raw.githubusercontent.com/sweep7125/rulesets/refs/heads/mihomo-rulesets/geosite-private.mrs"
+    path: "./ruleset/geosite-private.mrs"
+    interval: 2592000
+  ru-bundle-domains:
+    type: http
+    behavior: domain
+    format: mrs
+    url: "https://raw.githubusercontent.com/sweep7125/rulesets/refs/heads/mihomo-rulesets/geosite-ru-bundle.mrs"
+    path: "./ruleset/geosite-ru-bundle.mrs"
+    interval: 86400
+  ru-domains:
+    type: http
+    behavior: domain
+    format: mrs
+    url: "https://raw.githubusercontent.com/sweep7125/rulesets/refs/heads/mihomo-rulesets/geosite-category-ru.mrs"
+    path: "./ruleset/geosite-category-ru.mrs"
+    interval: 86400
+  ru-bundle-ips:
+    type: http
+    behavior: ipcidr
+    format: mrs
+    url: "https://raw.githubusercontent.com/sweep7125/rulesets/refs/heads/mihomo-rulesets/geoip-ru-bundle.mrs"
+    path: "./ruleset/geoip-ru-bundle.mrs"
+    interval: 86400
+  ru-ips:
+    type: http
+    behavior: ipcidr
+    format: mrs
+    url: "https://raw.githubusercontent.com/sweep7125/rulesets/refs/heads/mihomo-rulesets/geoip-ru.mrs"
+    path: "./ruleset/geoip-ru.mrs"
+    interval: 86400
+
+rules:
+  - "AND,((NETWORK,UDP),(DST-PORT,443)),REJECT"
+  - "RULE-SET,private-domains,DIRECT"
+  - "RULE-SET,private-ips,DIRECT,no-resolve"
+  - "RULE-SET,torrent-clients,DIRECT"
+  - "RULE-SET,ru-bundle-domains,PROXY"
+  - "RULE-SET,ru-domains,DIRECT"
+  - "RULE-SET,ru-bundle-ips,PROXY"
+  - "RULE-SET,ru-ips,DIRECT"
+  - "MATCH,\U0001F30D По умолчанию"

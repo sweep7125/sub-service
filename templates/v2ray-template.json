@@ -1,0 +1,281 @@
+[
+  {
+    "remarks": "Без РФ",
+    "log": {
+      "loglevel": "none"
+    },
+    "dns": {
+      "servers": [
+        "DNS_PLACEHOLDER",
+        {
+          "address": "77.88.8.1",
+          "domains": [
+            "geosite:category-ru"
+          ],
+          "skipFallback": true,
+          "tag": "domestic-dns"
+        }
+      ],
+      "queryStrategy": "UseIPv4",
+      "tag": "dns-module"
+    },
+    "routing": {
+      "domainStrategy": "IPIfNonMatch",
+      "rules": [
+        {
+          "inboundTag": [
+            "domestic-dns"
+          ],
+          "outboundTag": "direct"
+        },
+        {
+          "inboundTag": [
+            "dns-module"
+          ],
+          "outboundTag": "proxy"
+        },
+        {
+          "domain": [
+            "geosite:private"
+          ],
+          "outboundTag": "block"
+        },
+        {
+          "domain": [
+            "geosite:category-ban-ru"
+          ],
+          "outboundTag": "proxy"
+        },
+        {
+          "domain": [
+            "geosite:category-ru"
+          ],
+          "outboundTag": "direct"
+        },
+        {
+          "ip": [
+            "geoip:private"
+          ],
+          "outboundTag": "direct"
+        },
+        {
+          "ip": [
+            "geoip:category-ban-ru"
+          ],
+          "outboundTag": "proxy"
+        },
+        {
+          "domain": [
+            "geoip:ru"
+          ],
+          "outboundTag": "direct"
+        }
+      ]
+    },
+    "inbounds": [
+      {
+        "port": 10808,
+        "listen": "127.0.0.1",
+        "protocol": "mixed",
+        "sniffing": {
+          "enabled": true,
+          "destOverride": [
+            "http",
+            "tls"
+          ]
+        },
+        "settings": {
+          "auth": "noauth",
+          "udp": true
+        },
+        "streamSettings": {
+          "tcpFastOpen": true
+        }
+      }
+    ],
+    "outbounds": [
+      {
+        "tag": "proxy",
+        "protocol": "vless",
+        "settings": {
+          "vnext": [
+            {
+              "address": null,
+              "port": 443,
+              "users": [
+                {
+                  "id": null,
+                  "encryption": "none",
+                  "flow": "xtls-rprx-vision"
+                }
+              ]
+            }
+          ]
+        },
+        "streamSettings": {
+          "network": "raw",
+          "security": "reality",
+          "realitySettings": {
+            "fingerprint": "chrome",
+            "password": "",
+            "serverName": null,
+            "shortId": null,
+            "spiderX": null
+          },
+          "sockopt": {
+            "tcpFastOpen": true
+          }
+        },
+        "mux": {
+          "enabled": true,
+          "concurrency": -1,
+          "xudpConcurrency": 16,
+          "xudpProxyUDP443": "reject"
+        }
+      },
+      {
+        "tag": "direct",
+        "protocol": "freedom",
+        "streamSettings": {
+          "sockopt": {
+            "domainStrategy": "ForceIPv4",
+            "happyEyeballs": {
+              "tryDelayMs": 250
+            },
+            "tcpFastOpen": true
+          }
+        }
+      },
+      {
+        "tag": "block",
+        "protocol": "blackhole"
+      }
+    ]
+  },
+  {
+    "remarks": "Только блок",
+    "log": {
+      "loglevel": "none"
+    },
+    "dns": {
+      "servers": [
+        "77.88.8.1"
+      ],
+      "queryStrategy": "UseIPv4",
+      "tag": "dns-aux"
+    },
+    "routing": {
+      "rules": [
+        {
+          "inboundTag": [
+            "dns-aux"
+          ],
+          "outboundTag": "direct"
+        },
+        {
+          "domain": [
+            "geosite:private"
+          ],
+          "outboundTag": "block"
+        },
+        {
+          "domain": [
+            "geosite:ru-bundle"
+          ],
+          "outboundTag": "proxy"
+        },
+        {
+          "ip": [
+            "geoip:private"
+          ],
+          "outboundTag": "direct"
+        },
+        {
+          "ip": [
+            "geoip:ru-bundle"
+          ],
+          "outboundTag": "proxy"
+        }
+      ]
+    },
+    "inbounds": [
+      {
+        "port": 10808,
+        "listen": "127.0.0.1",
+        "protocol": "mixed",
+        "sniffing": {
+          "enabled": true,
+          "destOverride": [
+            "http",
+            "tls"
+          ]
+        },
+        "settings": {
+          "auth": "noauth",
+          "udp": true
+        },
+        "streamSettings": {
+          "tcpFastOpen": true
+        }
+      }
+    ],
+    "outbounds": [
+      {
+        "tag": "direct",
+        "protocol": "freedom",
+        "streamSettings": {
+          "sockopt": {
+            "domainStrategy": "ForceIPv4",
+            "happyEyeballs": {
+              "tryDelayMs": 250
+            },
+            "tcpFastOpen": true
+          }
+        }
+      },
+      {
+        "tag": "block",
+        "protocol": "blackhole"
+      },
+      {
+        "tag": "proxy",
+        "protocol": "vless",
+        "settings": {
+          "vnext": [
+            {
+              "address": null,
+              "port": 443,
+              "users": [
+                {
+                  "id": null,
+                  "encryption": "none",
+                  "flow": "xtls-rprx-vision"
+                }
+              ]
+            }
+          ]
+        },
+        "streamSettings": {
+          "network": "raw",
+          "security": "reality",
+          "realitySettings": {
+            "fingerprint": "chrome",
+            "password": "",
+            "serverName": null,
+            "shortId": null,
+            "spiderX": null
+          },
+          "sockopt": {
+            "tcpFastOpen": true
+          }
+        },
+        "mux": {
+          "enabled": true,
+          "concurrency": -1,
+          "xudpConcurrency": 16,
+          "xudpProxyUDP443": "reject"
+        }
+      }
+    ]
+  }
+]

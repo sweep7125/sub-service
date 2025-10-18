@@ -1,0 +1,24 @@
+[Unit]
+Description=Sub Service
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=sub-stub
+Group=sub-stub
+CacheDirectory=sub-stub
+CacheDirectoryMode=0750
+RuntimeDirectory=sub-stub
+WorkingDirectory=/opt/sub-stub
+ExecStart=/opt/sub-stub/.venv/bin/python3 /opt/sub-stub/app.py
+Restart=on-failure
+ExecStartPre=/opt/sub-stub/scripts/prestart-pip-upgrade.sh
+
+# Logging to systemd journal
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=sub-stub
+
+[Install]
+WantedBy=multi-user.target

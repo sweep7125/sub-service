@@ -1,0 +1,66 @@
+# ============================================================================
+# SERVERS DATABASE - База данных серверов
+# ============================================================================
+#
+# Формат: host | sni | dns | public_key | description | groups | [type] | [uuid] | [short_id]
+#
+# Поля (разделитель: |):
+#   host        - Адрес сервера (IP или домен) - обязательно
+#   sni         - Server Name для TLS/Reality - обязательно
+#   dns         - DNS сервер для этого региона - обязательно  
+#   public_key  - Публичный ключ Reality - обязательно
+#   description - Описание сервера (с эмодзи флагов) - обязательно
+#   groups      - Группы доступа через запятую - обязательно
+#   type        - Тип: "internal" или "external" - опционально, по умолчанию internal
+#   uuid        - Фиксированный UUID (только для external) - опционально
+#   short_id    - Фиксированный short_id (только для external) - опционально
+#
+# Примечания:
+#   - Строки начинающиеся с # игнорируются
+#   - Пустые строки игнорируются
+#   - internal серверы генерируют UUID/short_id для каждого пользователя
+#   - external серверы используют фиксированные UUID/short_id
+#   - Группы регистрозависимы
+#   - Пользователь получает серверы только из своих групп
+#   - Серверы без групп доступны всем
+#
+# Рекомендуемые DNS по регионам:
+#   Европа (общий):     https://dns.quad9.net/dns-query
+#   Европа (Google):    https://dns.google/dns-query
+#   США:                https://cloudflare-dns.com/dns-query
+#   Азия:               https://dns.google/dns-query
+#
+# ============================================================================
+
+# === PREMIUM TIER - Высокая скорость ===
+premium-server-01.example.com | premium-server-01.example.com | https://dns.quad9.net/dns-query | xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx | 🇸🇪 Sweden Premium 01 | premium,vip | internal
+premium-server-02.example.com | premium-server-02.example.com | https://dns.google/dns-query     | xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx | 🇪🇪 Estonia Premium 01 | premium,vip | internal
+
+# === STANDARD TIER - Стандартная скорость ===
+standard-server-01.example.com | standard-server-01.example.com | https://dns.quad9.net/dns-query | xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx | 🇸🇪 Sweden Standard 01 | default,family | internal
+
+# === EXTERNAL SERVERS - Внешние расшаренные серверы ===
+# Используются фиксированные UUID и short_id для всех пользователей
+external-server-01.example.com | external-server-01.example.com | https://dns.quad9.net/dns-query | xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx | 🇱🇻 External Server 01 | test,default | external | xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx | xxxxxxxx
+
+# === SHARED SERVERS - Доступны всем группам ===
+# Если группы не указаны, сервер доступен всем пользователям
+# prod-universal.example.com | prod-universal.example.com | https://dns.quad9.net/dns-query | xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx | 🌍 Universal-01 | | internal
+
+# ============================================================================
+# Примеры добавления новых серверов:
+# ============================================================================
+#
+# Новый внутренний сервер для премиум группы:
+# server.example.com | server.example.com | https://dns.quad9.net/dns-query | PUBLIC_KEY_HERE | 🇩🇪 Германия-01 | premium | internal
+#
+# Новый сервер для нескольких групп:
+# multi.example.com | multi.example.com | https://dns.google/dns-query | PUBLIC_KEY_HERE | 🇳🇱 Нидерланды-01 | default,premium,family | internal
+#
+# Внешний сервер с фиксированными credentials:
+# external.host.com | external.host.com | https://dns.quad9.net/dns-query | PUBLIC_KEY_HERE | 🇫🇷 Франция-EXT | vip | external | xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx | xxxxxxxx
+#
+# Универсальный сервер (доступен всем):
+# universal.example.com | universal.example.com | https://cloudflare-dns.com/dns-query | PUBLIC_KEY_HERE | 🇺🇸 США-Universal | | internal
+#
+# ============================================================================
