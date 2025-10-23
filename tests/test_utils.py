@@ -206,9 +206,7 @@ class TestNetworkUtils:
         from src.utils import get_client_ip
 
         request = Mock()
-        request.headers.get.side_effect = lambda h: (
-            "203.0.113.1" if h == "X-Real-IP" else None
-        )
+        request.headers.get.side_effect = lambda h: ("203.0.113.1" if h == "X-Real-IP" else None)
         request.remote_addr = "192.168.1.1"
 
         ip = get_client_ip(request)

@@ -93,11 +93,15 @@ pip install flask waitress pyyaml requests
 ```bash
 # Required for production
 export SOCK=/path/to/socket
+export SECRET_PATH=your_secret_path
 
 # Optional
 export SUBSTUB_CACHE_DIR=/var/cache/sub-stub
 export LOG_LEVEL=INFO
-export SECRET_PATH=your_secret_path
+
+# Custom HTTP Headers (see below for details)
+export CUSTOM_HEADER_1=profile-update-interval|24
+export CUSTOM_HEADER_2=profile-title|base64:VGVzdFRpdGxlRXhhbXBsZQ==
 ```
 
 4. Run the application:
@@ -128,6 +132,75 @@ The system uses groups to control which users can access which servers:
 - `vip` - Maximum speed, all regions
 - `family` - Family group
 - `test` - Testing environment
+
+## 🎛️ Custom HTTP Headers
+
+The system supports flexible configuration of custom HTTP headers that are sent with all responses. Headers can be configured to always send or conditionally based on User-Agent matching.
+
+### Configuration Format
+
+Headers are configured via environment variables:
+```
+CUSTOM_HEADER_<N>=header_name|header_value[|user_agent_regex]
+```
+
+**Components:**
+- `header_name` - The HTTP header name to send
+- `header_value` - The header value (can contain any characters including colons, commas, etc.)
+- `user_agent_regex` - (Optional) Regex pattern to match User-Agent header
+  - If specified, header is only sent when User-Agent matches (uses `re.search()`)
+  - If omitted, header is always sent to all clients
+
+### Examples
+
+**Always send headers (no User-Agent filter):**
+```bash
+# Profile update interval in hours
+CUSTOM_HEADER_1=profile-update-interval|24
+
+# Profile title with base64 encoding
+CUSTOM_HEADER_2=profile-title|base64:VGVzdFRpdGxlRXhhbXBsZQ==
+
+# Custom metadata
+CUSTOM_HEADER_3=x-server-region|EU
+```
+
+**Send header only to specific User-Agents:**
+```bash
+# Only for Happ clients (User-Agent starts with "Happ/")
+CUSTOM_HEADER_4=x-special-feature|enabled|^Happ/\d+\.\d+\.\d+
+
+# Only for mobile clients (User-Agent contains "Mobile", "Android", or "iPhone")
+CUSTOM_HEADER_5=x-mobile-config|optimized|Mobile|Android|iPhone
+
+# Only for specific client versions
+CUSTOM_HEADER_6=x-new-feature|available|Happ/2\.|Happ/3\.
+```
+
+### Features
+
+- **Unlimited headers**: Configure as many custom headers as needed
+- **Value flexibility**: Header values can contain any characters (colons, special chars, base64, etc.)
+- **Regex matching**: Powerful User-Agent filtering using Python regex (`re.search()`)
+- **Pattern matching**: Regex matches anywhere in User-Agent string
+- **Validation**: Invalid regex patterns are caught at startup with clear error messages
+- **Logging**: Configuration errors are logged for easy debugging
+
+### Use Cases
+
+1. **Client Configuration**: Send update intervals, profile titles, subscription metadata
+2. **Feature Flags**: Enable/disable features based on client type or version
+3. **A/B Testing**: Send different configurations to different user agents
+4. **Mobile Optimization**: Send mobile-specific settings only to mobile clients
+5. **Version Control**: Provide version-specific features to compatible clients
+
+### Notes
+
+- Headers are applied to all configuration endpoints (JSON, V2Ray, Mihomo/Clash)
+- User-Agent matching is case-sensitive (use `(?i)` in regex for case-insensitive matching)
+- Invalid configurations are skipped with warnings in logs
+- The pipe character `|` is used as delimiter (more reliable than colon)
+- Special routing header for Happ clients is still applied separately for backward compatibility
 
 ## API Endpoints
 

@@ -2,6 +2,7 @@
 
 import logging
 import os
+import re
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -216,17 +217,6 @@ class EnvConfig:
         """Check if file cache is enabled."""
         return self.get_bool("ENABLE_FILE_CACHE", True)
 
-    # Profile settings
-    @property
-    def profile_update_interval(self) -> str:
-        """Get profile update interval."""
-        return self.get_str("PROFILE_UPDATE_INTERVAL", "24")
-
-    @property
-    def profile_title(self) -> str:
-        """Get profile title."""
-        return self.get_str("PROFILE_TITLE", "base64:8J+MjSDQktCw0YLRgNGD0YjQutCw")
-
     # Geo files settings
     @property
     def geo_files_urls(self) -> list[str]:
@@ -272,6 +262,60 @@ class EnvConfig:
     def worker_threads(self) -> int:
         """Get number of worker threads."""
         return self.get_int("WORKER_THREADS", 1)
+
+    @property
+    def custom_headers(self) -> list[dict[str, str]]:
+        """Get custom headers configuration.
+
+        Parses all CUSTOM_HEADER_* environment variables.
+        Format: CUSTOM_HEADER_<N>=header_name|header_value[|user_agent_regex]
+
+        The pipe character (|) is used as delimiter between fields.
+
+        Returns:
+            List of dictionaries with keys:
+            - name: Header name
+            - value: Header value
+            - user_agent_regex: Optional regex pattern for User-Agent filtering
+        """
+        headers = []
+
+        # Collect all CUSTOM_HEADER_* environment variables
+        for key, value in os.environ.items():
+            if not key.startswith("CUSTOM_HEADER_"):
+                continue
+
+            # Parse header configuration: header_name|header_value[|user_agent_regex]
+            parts = value.split("|", 2)  # Split into max 3 parts
+            if len(parts) < 2:
+                logger.warning(f"Invalid custom header format in {key}: {value}")
+                continue
+
+            header_name = parts[0].strip()
+            header_value = parts[1].strip()
+            user_agent_regex = parts[2].strip() if len(parts) > 2 else None
+
+            if not header_name or not header_value:
+                logger.warning(f"Empty header name or value in {key}: {value}")
+                continue
+
+            # Validate regex if provided
+            if user_agent_regex:
+                try:
+                    re.compile(user_agent_regex)
+                except re.error as e:
+                    logger.error(f"Invalid regex in {key}: {user_agent_regex} - {e}")
+                    continue
+
+            headers.append(
+                {
+                    "name": header_name,
+                    "value": header_value,
+                    "user_agent_regex": user_agent_regex,
+                }
+            )
+
+        return headers
 
 
 # Global configuration instance

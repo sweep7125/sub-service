@@ -4,9 +4,6 @@ from typing import Final
 
 from .config import env_config
 
-# Default profile title (from environment or base64 encoded default)
-DEFAULT_PROFILE_TITLE: Final[str] = env_config.profile_title
-
 # Reserved paths that cannot be used as spider-x (includes secret path from env)
 RESERVED_PATHS: Final[frozenset[str]] = frozenset(
     {
@@ -26,9 +23,8 @@ DNS_PLACEHOLDERS: Final[frozenset[str]] = frozenset(
 # Geo files URLs for automatic updates (from environment)
 GEO_FILES_URLS: Final[list[str]] = env_config.geo_files_urls
 
-# HTTP headers (from environment)
-PROFILE_UPDATE_INTERVAL: Final[str] = env_config.profile_update_interval
-HAPP_ROUTING_FALLBACK: Final[str] = ""
+# Custom HTTP headers configuration (from environment)
+CUSTOM_HEADERS: Final[list[dict[str, str]]] = env_config.custom_headers
 
 # Spider-X generation parameters (from environment)
 SPIDERX_MIN_LENGTH: Final[int] = env_config.spiderx_min_length

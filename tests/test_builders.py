@@ -17,9 +17,7 @@ class TestMihomoBuilder:
                 "servername": "placeholder",
                 "reality-opts": {"public-key": "", "short-id": ""},
             },
-            "proxy-groups": [
-                {"name": "auto", "type": "url-test", "proxies": "__PROXY_NAMES__"}
-            ],
+            "proxy-groups": [{"name": "auto", "type": "url-test", "proxies": "__PROXY_NAMES__"}],
         }
 
         builder = MihomoBuilder(template_loader=lambda: template)
@@ -118,9 +116,7 @@ class TestMihomoBuilder:
 
         template = {
             "proxy-template": {"type": "vless"},
-            "proxy-groups": [
-                {"name": "auto", "proxies": "__PROXY_NAMES__"}
-            ],
+            "proxy-groups": [{"name": "auto", "proxies": "__PROXY_NAMES__"}],
         }
 
         builder = MihomoBuilder(template_loader=lambda: template)
@@ -210,7 +206,9 @@ class TestV2RayBuilder:
     def test_build_filters_by_groups(self, sample_user: UserInfo):
         """Test that only accessible servers are included."""
         servers = [
-            Server(host="premium.example.com", description="Premium", groups=frozenset(["premium"])),
+            Server(
+                host="premium.example.com", description="Premium", groups=frozenset(["premium"])
+            ),
             Server(host="basic.example.com", description="Basic", groups=frozenset(["basic"])),
         ]
 
@@ -273,11 +271,19 @@ class TestLegacyJsonBuilder:
     def test_build_filters_servers(self, sample_user: UserInfo):
         """Test that servers are filtered by group access."""
         servers = [
-            Server(host="premium.example.com", description="Premium Server", groups=frozenset(["premium"])),
-            Server(host="basic.example.com", description="Basic Server", groups=frozenset(["basic"])),
+            Server(
+                host="premium.example.com",
+                description="Premium Server",
+                groups=frozenset(["premium"]),
+            ),
+            Server(
+                host="basic.example.com", description="Basic Server", groups=frozenset(["basic"])
+            ),
         ]
 
-        template = [{"remarks": "", "outbounds": [{"protocol": "vless", "settings": {"vnext": []}}]}]
+        template = [
+            {"remarks": "", "outbounds": [{"protocol": "vless", "settings": {"vnext": []}}]}
+        ]
 
         builder = LegacyJsonBuilder(json_loader=lambda: template)
         result = builder.build(servers, sample_user)

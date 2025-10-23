@@ -115,9 +115,7 @@ class TestServerFilterService:
 
         # Should include premium servers and servers without groups
         assert len(filtered) >= 1
-        assert all(
-            not s.groups or user.has_access_to_groups(s.groups) for s in filtered
-        )
+        assert all(not s.groups or user.has_access_to_groups(s.groups) for s in filtered)
 
     def test_filter_includes_public_servers(self, multiple_servers):
         """Test that public servers (no groups) are included."""

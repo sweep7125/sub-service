@@ -94,5 +94,6 @@ class AppConfig:
 
         if missing:
             raise FileNotFoundError(
-                "Required configuration files are missing:\n" + "\n".join(f"  - {m}" for m in missing)
+                "Required configuration files are missing:\n"
+                + "\n".join(f"  - {m}" for m in missing)
             )

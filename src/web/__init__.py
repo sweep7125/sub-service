@@ -10,11 +10,10 @@ from flask import Flask, Request, Response, abort, g, redirect, request
 
 from ..config import env_config
 from ..constants import (
-    DEFAULT_PROFILE_TITLE,
+    CUSTOM_HEADERS,
     MIME_TYPE_JSON,
     MIME_TYPE_TEXT,
     MIME_TYPE_YAML,
-    PROFILE_UPDATE_INTERVAL,
 )
 from ..models import AppConfig
 from ..services import ConfigService, GeoFileService
@@ -60,6 +59,7 @@ def _is_secure_connection(request_obj: Request) -> bool:
         f"Proto: {forwarded_proto or 'none'}"
     )
     return False
+
 
 # Happ client user agent pattern
 _HAPP_USER_AGENT_PATTERN: Final[re.Pattern[str]] = re.compile(r"^Happ/\d+\.\d+\.\d+")
@@ -166,7 +166,7 @@ class WebApplication:
             Configuration response
         """
         client_ip = getattr(g, "client_ip", "unknown")
-        user_agent = request.headers.get('User-Agent', 'N/A')
+        user_agent = request.headers.get("User-Agent", "N/A")
 
         # Parse user path
         user, format_type = self._parse_user_path(user_path)
@@ -331,12 +331,30 @@ class WebApplication:
         Returns:
             Modified response
         """
-        # Standard headers
-        response.headers["profile-update-interval"] = PROFILE_UPDATE_INTERVAL
-        response.headers["profile-title"] = DEFAULT_PROFILE_TITLE
-
-        # Happ routing header for compatible clients
         user_agent = request.headers.get("User-Agent", "")
+
+        # Apply custom headers from environment configuration
+        for header_config in CUSTOM_HEADERS:
+            header_name = header_config["name"]
+            header_value = header_config["value"]
+            user_agent_regex = header_config.get("user_agent_regex")
+
+            # If user-agent regex is specified, only apply header if it matches
+            if user_agent_regex:
+                try:
+                    if re.search(user_agent_regex, user_agent):
+                        response.headers[header_name] = header_value
+                except re.error as e:
+                    logger.error(
+                        f"Invalid regex pattern for header '{header_name}': "
+                        f"{user_agent_regex} - {e}"
+                    )
+            else:
+                # No user-agent filter, always apply the header
+                response.headers[header_name] = header_value
+
+        # Keep backward compatibility: apply Happ routing header for compatible clients
+        # This is now handled separately for special routing logic
         if _HAPP_USER_AGENT_PATTERN.match(user_agent):
             routing_header = self.geo_service.build_routing_header(self._happ_routing_config)
             if routing_header:
