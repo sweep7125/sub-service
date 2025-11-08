@@ -20,7 +20,7 @@ class TestMihomoBuilder:
             "proxy-groups": [{"name": "auto", "type": "url-test", "proxies": "__PROXY_NAMES__"}],
         }
 
-        builder = MihomoBuilder(template_loader=lambda: template)
+        builder = MihomoBuilder(template_loader=lambda template_name=None: template)
         result = builder.build([sample_server], sample_user)
 
         assert isinstance(result, bytes)
@@ -53,7 +53,7 @@ class TestMihomoBuilder:
             }
         }
 
-        builder = MihomoBuilder(template_loader=lambda: template)
+        builder = MihomoBuilder(template_loader=lambda template_name=None: template)
         result = builder.build([ext_server], sample_user)
 
         config_str = result.decode("utf-8")
@@ -78,7 +78,7 @@ class TestMihomoBuilder:
         ]
 
         template = {"proxy-template": {"type": "vless"}}
-        builder = MihomoBuilder(template_loader=lambda: template)
+        builder = MihomoBuilder(template_loader=lambda template_name=None: template)
 
         # User with premium group
         result = builder.build(servers, sample_user)
@@ -98,7 +98,7 @@ class TestMihomoBuilder:
         ]
 
         template = {"proxy-template": {"type": "vless"}}
-        builder = MihomoBuilder(template_loader=lambda: template)
+        builder = MihomoBuilder(template_loader=lambda template_name=None: template)
 
         # Should raise ValueError
         try:
@@ -119,7 +119,7 @@ class TestMihomoBuilder:
             "proxy-groups": [{"name": "auto", "proxies": "__PROXY_NAMES__"}],
         }
 
-        builder = MihomoBuilder(template_loader=lambda: template)
+        builder = MihomoBuilder(template_loader=lambda template_name=None: template)
         result = builder.build(servers, sample_user)
         config_str = result.decode("utf-8")
 

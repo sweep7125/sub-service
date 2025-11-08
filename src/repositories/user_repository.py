@@ -31,7 +31,7 @@ def _parse_groups(groups_str: str | None) -> frozenset[str]:
 class UserRepository(BaseRepository[dict[str, UserInfo]]):
     """Repository for loading user credentials.
 
-    File format: uuid|short_id|link_path|comment|groups (pipe-separated)
+    File format: uuid|short_id|link_path|comment|groups|mihomo_advanced (pipe-separated)
     """
 
     def _load_from_file(self, path: Path) -> dict[str, UserInfo]:
@@ -67,7 +67,7 @@ class UserRepository(BaseRepository[dict[str, UserInfo]]):
     def _parse_line(self, line: str) -> tuple[str, UserInfo] | None:
         """Parse pipe-separated format.
 
-        Format: uuid|short_id|link_path|comment|groups
+        Format: uuid|short_id|link_path|comment|groups|mihomo_advanced
 
         Args:
             line: Configuration line
@@ -75,7 +75,7 @@ class UserRepository(BaseRepository[dict[str, UserInfo]]):
         Returns:
             Tuple of (link_path, UserInfo) or None if invalid
         """
-        parts = [p.strip() for p in line.split("|", 4)]
+        parts = [p.strip() for p in line.split("|", 5)]
 
         if len(parts) < 3:
             return None
@@ -85,6 +85,7 @@ class UserRepository(BaseRepository[dict[str, UserInfo]]):
         link_path = parts[2] if len(parts) > 2 else None
         comment = parts[3] if len(parts) > 3 else ""
         groups_str = parts[4] if len(parts) > 4 else None
+        mihomo_advanced = parts[5] if len(parts) > 5 and parts[5] else None
 
         if not user_id or not link_path:
             return None
@@ -105,6 +106,7 @@ class UserRepository(BaseRepository[dict[str, UserInfo]]):
             comment=comment,
             link_path=link_path,
             groups=groups,
+            mihomo_advanced=mihomo_advanced,
         )
 
     def _get_default(self) -> dict[str, UserInfo]:

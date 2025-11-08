@@ -111,6 +111,7 @@ class ConfigRepository:
         self.template = TextConfigRepository(template_path)
         self.v2ray_template = JsonConfigRepository(v2ray_template_path)
         self.mihomo_template = YamlConfigRepository(mihomo_template_path)
+        self._mihomo_template_dir = mihomo_template_path.parent
 
     def get_all_servers(self):
         """Get all servers from unified configuration.
@@ -119,3 +120,32 @@ class ConfigRepository:
             List of all servers
         """
         return self.servers.get()
+
+    def get_mihomo_template(self, template_name: str | None = None) -> dict[str, Any]:
+        """Load Mihomo template by name.
+
+        Args:
+            template_name: Optional custom template filename (e.g., "advanced-config.yaml").
+                          If None, returns default mihomo-template.yaml
+
+        Returns:
+            Template configuration dictionary
+        """
+        if not template_name:
+            return self.mihomo_template.get()
+
+        # Load custom template
+        template_path = self._mihomo_template_dir / template_name
+        if not template_path.exists():
+            import logging
+
+            logger = logging.getLogger(__name__)
+            logger.warning(
+                f"Custom Mihomo template '{template_name}' not found at {template_path}, "
+                f"falling back to default template"
+            )
+            return self.mihomo_template.get()
+
+        # Create temporary repository for custom template
+        custom_repo = YamlConfigRepository(template_path)
+        return custom_repo.get()

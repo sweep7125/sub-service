@@ -34,7 +34,7 @@ class ConfigService:
         self.spiderx_gen = SpiderXGenerator()
 
         # Initialize builders
-        self.mihomo_builder = MihomoBuilder(template_loader=self.repos.mihomo_template.get)
+        self.mihomo_builder = MihomoBuilder(template_loader=self.repos.get_mihomo_template)
 
         self.v2ray_builder = V2RayBuilder(
             template_loader=self.repos.template.get,
@@ -75,7 +75,9 @@ class ConfigService:
         Returns:
             YAML configuration
         """
-        return self.mihomo_builder.build(servers, user)
+        # Use custom template if user has mihomo_advanced field set
+        template_name = user.mihomo_advanced
+        return self.mihomo_builder.build(servers, user, template_name=template_name)
 
     def build_v2ray_config(self, servers: list[Server], user: UserInfo) -> bytes:
         """Build V2Ray subscription.

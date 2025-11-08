@@ -42,13 +42,25 @@ web-panel/
 ## 📋 Configuration Files
 
 ### users
-User database with group-based access control:
+User database with group-based access control and optional custom Mihomo templates:
 ```
-uuid | short_id | link_path | comment | groups
+uuid | short_id | link_path | comment | groups | mihomo_advanced
 ```
-**Example:**
+**Fields:**
+- `uuid` - User's UUID for VPN connection
+- `short_id` - Short ID for Reality protocol
+- `link_path` - Custom path for user's subscription link
+- `comment` - Human-readable name/description
+- `groups` - Comma-separated group list
+- `mihomo_advanced` - *(Optional)* Custom Mihomo template filename
+
+**Examples:**
 ```
-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx | xxxxxxxxxxxxxxxx | premium_user1 | Premium User | premium,vip
+# Regular user with standard Mihomo template
+xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx | xxxxxxxxxxxxxxxx | premium_user1 | Premium User | premium,vip |
+
+# Advanced user with custom Mihomo template
+xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxy | xxxxxxxxxxxxxxyy | vip_user2 | VIP User | premium,vip | advanced-config.yaml
 ```
 
 ### servers
@@ -64,8 +76,9 @@ premium-server-01.example.com | premium-server-01.example.com | https://dns.quad
 ### templates/
 Configuration templates directory:
 - `v2ray-template.json` - V2Ray JSON configuration template
-- `mihomo-template.yaml` - Mihomo YAML configuration template  
+- `mihomo-template.yaml` - Default Mihomo YAML configuration template  
 - `v2ray-url-template.txt` - VLESS URL template
+- Custom templates - Create additional YAML files for per-user Mihomo configurations
 - `README.md` - Template documentation
 
 ### happ.routing
@@ -132,6 +145,80 @@ The system uses groups to control which users can access which servers:
 - `vip` - Maximum speed, all regions
 - `family` - Family group
 - `test` - Testing environment
+
+## 🎨 Custom Mihomo Templates
+
+You can create custom Mihomo configuration templates for individual users with personalized settings (ports, rules, DNS, etc.).
+
+### How It Works
+
+1. **Default behavior**: Users without `mihomo_advanced` field get standard `mihomo-template.yaml`
+2. **Custom template**: Users with `mihomo_advanced` field get the specified template from `templates/` directory
+
+### Setup Instructions
+
+**Step 1: Create Custom Template**
+
+Create a new YAML file in `templates/` directory (e.g., `templates/advanced-config.yaml`):
+
+```yaml
+# Custom ports for VIP users
+mixed-port: 7891
+allow-lan: true
+mode: rule
+
+# Proxy template (required)
+proxy-template:
+  type: vless
+  network: tcp
+  udp: true
+  tls: true
+  servername: placeholder
+  uuid: placeholder
+  flow: xtls-rprx-vision
+  reality-opts:
+    public-key: ""
+    short-id: ""
+
+# Custom proxy groups
+proxy-groups:
+  - name: "🚀 Auto Select"
+    type: url-test
+    proxies: __PROXY_NAMES__
+    url: 'http://www.gstatic.com/generate_204'
+    interval: 300
+
+# Custom rules
+rules:
+  - DOMAIN-SUFFIX,openai.com,🚀 Auto Select
+  - GEOIP,CN,DIRECT
+  - MATCH,🚀 Auto Select
+```
+
+**Step 2: Assign Template to User**
+
+Edit `users` file and add template filename in the 6th field:
+
+```
+uuid|short_id|link_path|comment|groups|mihomo_advanced
+xxxxxxxx-1234|abcd1234|user1|Regular User|default,premium|
+xxxxxxxx-5678|abcd5678|user2|VIP User|default,vip|advanced-config.yaml
+```
+
+**Important Notes:**
+- Template filename only (no path): `advanced-config.yaml` not `/templates/advanced-config.yaml`
+- Must contain `proxy-template` section (used for server configuration generation)
+- Use `__PROXY_NAMES__` placeholder for automatic server list substitution
+- If template file not found, falls back to default `mihomo-template.yaml` with warning in logs
+- Changes apply immediately (no restart required)
+
+### Use Cases
+
+- **VIP users**: Enhanced DNS, different ports, advanced routing rules
+- **Regional users**: Specific geo-routing rules and DNS servers
+- **Gaming users**: Low-latency optimized configurations
+- **Streaming users**: Optimized for video streaming services
+- **Work users**: Limited access to specific domains only
 
 ## 🎛️ Custom HTTP Headers
 

@@ -14,6 +14,7 @@ class UserInfo:
         comment: Human-readable comment/name for the user
         link_path: Custom path component for user's subscription link
         groups: Set of group names the user belongs to
+        mihomo_advanced: Optional custom Mihomo template filename
     """
 
     id: str
@@ -22,6 +23,7 @@ class UserInfo:
     comment: str = ""
     link_path: str = ""
     groups: frozenset[str] = frozenset()
+    mihomo_advanced: str | None = None
 
     def get_short_id(self, default: str = "") -> str:
         """Get short ID with fallback.

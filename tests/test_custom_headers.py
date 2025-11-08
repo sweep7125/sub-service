@@ -10,15 +10,9 @@ class TestCustomHeaders:
         """Test that custom headers are parsed correctly from environment."""
         # Set up test environment variables
         monkeypatch.setenv("CUSTOM_HEADER_1", "profile-update-interval|24")
-        monkeypatch.setenv(
-            "CUSTOM_HEADER_2", "profile-title|base64:VGVzdFRpdGxlRXhhbXBsZQ=="
-        )
-        monkeypatch.setenv(
-            "CUSTOM_HEADER_3", r"x-special-feature|enabled|^Happ/\d+\.\d+\.\d+"
-        )
-        monkeypatch.setenv(
-            "CUSTOM_HEADER_4", "x-mobile-config|true|Mobile|Android|iPhone"
-        )
+        monkeypatch.setenv("CUSTOM_HEADER_2", "profile-title|base64:VGVzdFRpdGxlRXhhbXBsZQ==")
+        monkeypatch.setenv("CUSTOM_HEADER_3", r"x-special-feature|enabled|^Happ/\d+\.\d+\.\d+")
+        monkeypatch.setenv("CUSTOM_HEADER_4", "x-mobile-config|true|Mobile|Android|iPhone")
         monkeypatch.setenv("CUSTOM_HEADER_5", "x-always-sent|always")
 
         # Reload config to pick up new environment variables
@@ -69,12 +63,8 @@ class TestCustomHeaders:
 
     def test_user_agent_regex_matching(self, monkeypatch):
         """Test user-agent regex matching logic."""
-        monkeypatch.setenv(
-            "CUSTOM_HEADER_TEST1", r"test-happ|value1|^Happ/\d+\.\d+\.\d+"
-        )
-        monkeypatch.setenv(
-            "CUSTOM_HEADER_TEST2", "test-mobile|value2|Mobile|Android|iPhone"
-        )
+        monkeypatch.setenv("CUSTOM_HEADER_TEST1", r"test-happ|value1|^Happ/\d+\.\d+\.\d+")
+        monkeypatch.setenv("CUSTOM_HEADER_TEST2", "test-mobile|value2|Mobile|Android|iPhone")
 
         from importlib import reload
 
@@ -174,9 +164,7 @@ class TestCustomHeaders:
     def test_user_agent_filtered_headers(self, app_config, monkeypatch):
         """Test that user-agent filtered headers are applied conditionally."""
         # Set up header that only applies to Happ clients
-        monkeypatch.setenv(
-            "CUSTOM_HEADER_HAPP_ONLY", r"x-happ-only|happ-value|^Happ/\d+"
-        )
+        monkeypatch.setenv("CUSTOM_HEADER_HAPP_ONLY", r"x-happ-only|happ-value|^Happ/\d+")
 
         from importlib import reload
 

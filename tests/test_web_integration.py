@@ -185,7 +185,7 @@ class TestConfigGeneration:
         from src.models import UserInfo
 
         user = UserInfo(id="test-id", groups=frozenset(["admin"]))
-        builder = MihomoBuilder(template_loader=lambda: {"proxy-template": {}})
+        builder = MihomoBuilder(template_loader=lambda template_name=None: {"proxy-template": {}})
 
         try:
             builder.build([], user)
