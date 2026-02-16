@@ -98,19 +98,13 @@
         "tag": "proxy",
         "protocol": "vless",
         "settings": {
-          "vnext": [
-            {
-              "address": null,
-              "port": 443,
-              "users": [
-                {
-                  "id": null,
-                  "encryption": "none",
-                  "flow": "xtls-rprx-vision"
-                }
-              ]
-            }
-          ]
+          "address": null,
+          "port": 443,
+          "id": null,
+          "encryption": "none",
+          "flow": "xtls-rprx-vision",
+          "level": 0,
+          "reverse": {}
         },
         "streamSettings": {
           "network": "raw",
@@ -241,19 +235,13 @@
         "tag": "proxy",
         "protocol": "vless",
         "settings": {
-          "vnext": [
-            {
-              "address": null,
-              "port": 443,
-              "users": [
-                {
-                  "id": null,
-                  "encryption": "none",
-                  "flow": "xtls-rprx-vision"
-                }
-              ]
-            }
-          ]
+          "address": null,
+          "port": 443,
+          "id": null,
+          "encryption": "none",
+          "flow": "xtls-rprx-vision",
+          "level": 0,
+          "reverse": {}
         },
         "streamSettings": {
           "network": "raw",

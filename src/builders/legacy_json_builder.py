@@ -177,38 +177,44 @@ class LegacyJsonBuilder(BaseConfigBuilder):
             user: User credentials
             spider_x: Spider-X path
         """
-        # Patch settings/vnext
+        # Patch settings
         settings = outbound.get("settings")
         if isinstance(settings, dict):
-            vnext_list = settings.get("vnext")
-            if isinstance(vnext_list, list):
-                for vnext in vnext_list:
-                    self._patch_vnext(vnext, server, user)
+            self._patch_settings(settings, server, user)
 
         # Patch stream settings for Reality
         stream_settings = outbound.get("streamSettings")
         if isinstance(stream_settings, dict):
             self._patch_reality_settings(stream_settings, server, user, spider_x)
 
-    def _patch_vnext(self, vnext: JsonDict, server: Server, user: UserInfo) -> None:
-        """Patch vnext configuration.
+    def _patch_settings(self, settings: JsonDict, server: Server, user: UserInfo) -> None:
+        """Patch settings configuration.
+
+        Handles settings with direct fields like:
+        {
+          "address": "example.com",
+          "port": 443,
+          "id": "uuid",
+          "encryption": "none",
+          "flow": "xtls-rprx-vision",
+          "level": 0,
+          "reverse": {}
+        }
 
         Args:
-            vnext: Vnext configuration to modify
+            settings: Settings configuration to modify
             server: Server configuration
             user: User credentials
         """
-        # Patch user IDs
-        users = vnext.get("users")
-        if isinstance(users, list):
-            for user_config in users:
-                if isinstance(user_config, dict):
-                    user_config["id"] = server.fixed_id or user.id
-
         # Patch address
-        address = vnext.get("address")
+        address = settings.get("address")
         if not address or str(address).lower() == "null":
-            vnext["address"] = server.host
+            settings["address"] = server.host
+
+        # Patch user ID
+        user_id = settings.get("id")
+        if not user_id or str(user_id).lower() == "null":
+            settings["id"] = server.fixed_id or user.id
 
     def _patch_reality_settings(
         self, stream_settings: JsonDict, server: Server, user: UserInfo, spider_x: str

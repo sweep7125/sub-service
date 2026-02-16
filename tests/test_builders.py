@@ -253,7 +253,12 @@ class TestLegacyJsonBuilder:
                 "outbounds": [
                     {
                         "protocol": "vless",
-                        "settings": {"vnext": []},
+                        "settings": {
+                            "address": None,
+                            "port": 443,
+                            "id": None,
+                            "encryption": "none",
+                        },
                     }
                 ],
             }
@@ -282,7 +287,19 @@ class TestLegacyJsonBuilder:
         ]
 
         template = [
-            {"remarks": "", "outbounds": [{"protocol": "vless", "settings": {"vnext": []}}]}
+            {
+                "remarks": "",
+                "outbounds": [
+                    {
+                        "protocol": "vless",
+                        "settings": {
+                            "address": None,
+                            "port": 443,
+                            "id": None,
+                        },
+                    }
+                ],
+            }
         ]
 
         builder = LegacyJsonBuilder(json_loader=lambda: template)
@@ -293,3 +310,59 @@ class TestLegacyJsonBuilder:
         assert "Premium Server" in config_str
         # Check that basic server is NOT included
         assert "Basic Server" not in config_str
+
+    def test_build_with_settings_format(self, sample_user: UserInfo, sample_server: Server):
+        """Test building with settings format."""
+        import json
+
+        template = [
+            {
+                "remarks": "Config",
+                "outbounds": [
+                    {
+                        "protocol": "vless",
+                        "settings": {
+                            "address": None,
+                            "port": 443,
+                            "id": None,
+                            "encryption": "none",
+                            "flow": "xtls-rprx-vision",
+                            "level": 0,
+                            "reverse": {},
+                        },
+                        "streamSettings": {
+                            "security": "reality",
+                            "realitySettings": {
+                                "serverName": None,
+                                "shortId": None,
+                                "spiderX": None,
+                                "password": "",
+                            },
+                        },
+                    }
+                ],
+            }
+        ]
+
+        builder = LegacyJsonBuilder(json_loader=lambda: template)
+        result = builder.build([sample_server], sample_user)
+
+        assert isinstance(result, bytes)
+        configs = json.loads(result.decode("utf-8"))
+
+        assert isinstance(configs, list)
+        assert len(configs) > 0
+
+        # Check that settings were patched correctly
+        outbound = configs[0]["outbounds"][0]
+        settings = outbound["settings"]
+
+        # Verify address was set
+        assert settings["address"] == sample_server.host
+        # Verify ID was set
+        assert settings["id"] == sample_user.id
+        # Verify other fields preserved
+        assert settings["port"] == 443
+        assert settings["encryption"] == "none"
+        assert settings["flow"] == "xtls-rprx-vision"
+        assert settings["level"] == 0

@@ -75,11 +75,11 @@ premium-server-01.example.com | premium-server-01.example.com | https://dns.quad
 
 ### templates/
 Configuration templates directory:
-- `v2ray-template.json` - V2Ray JSON configuration template
+- `v2ray-template.json` - V2Ray JSON configuration template (supports both vnext and flat settings formats)
 - `mihomo-template.yaml` - Default Mihomo YAML configuration template  
 - `v2ray-url-template.txt` - VLESS URL template
 - Custom templates - Create additional YAML files for per-user Mihomo configurations
-- `README.md` - Template documentation
+- `README.md` - Template documentation with format specifications
 
 ### happ.routing
 JSON configuration for Happ client routing rules (DNS, geo files, domain/IP rules)

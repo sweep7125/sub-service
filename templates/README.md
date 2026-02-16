@@ -22,6 +22,42 @@
 - `DNS_PLACEHOLDER` - заменяется на DNS сервер из настроек сервера
 - `null` в полях address, id, serverName, shortId, spiderX - заполняются из user/server данных
 
+**Поддерживаемые форматы settings:**
+1. **Формат vnext** (классический):
+```json
+"settings": {
+  "vnext": [
+    {
+      "address": null,
+      "port": 443,
+      "users": [
+        {
+          "id": null,
+          "encryption": "none",
+          "flow": "xtls-rprx-vision"
+        }
+      ]
+    }
+  ]
+}
+```
+
+2. **Плоский формат** (новый, упрощённый):
+```json
+"settings": {
+  "address": null,
+  "port": 443,
+  "id": null,
+  "encryption": "none",
+  "flow": "xtls-rprx-vision",
+  "level": 0,
+  "reverse": {}
+}
+```
+
+Оба формата полностью поддерживаются и могут использоваться одновременно в разных блоках конфигурации.
+Пример плоского формата: `examples/v2ray-flat-settings-example.json`
+
 
 ### 2. mihomo-template.yaml
 **Тип:** Mihomo/Clash configuration (YAML)
