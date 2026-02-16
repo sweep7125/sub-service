@@ -3,6 +3,7 @@
 from typing import Protocol
 
 from ..models import Server, UserInfo
+from ..utils import SpiderXGenerator
 
 
 class ConfigBuilder(Protocol):
@@ -46,15 +47,7 @@ class BaseConfigBuilder:
             List of accessible servers
         """
         # Filter servers based on group access
-        accessible_servers: dict[str, Server] = {}
-
-        for server in servers:
-            # Check group access
-            if user.has_access_to_groups(server.groups):
-                # Use host as unique key to prevent duplicates
-                accessible_servers[server.host] = server
-
-        return list(accessible_servers.values())
+        return [server for server in servers if user.has_access_to_groups(server.groups)]
 
     @staticmethod
     def deduplicate_by_host(servers: list[Server]) -> list[Server]:
@@ -90,3 +83,32 @@ class BaseConfigBuilder:
         """
         filtered = self.filter_servers_for_user(servers, user)
         return self.deduplicate_by_host(filtered)
+
+    @staticmethod
+    def generate_spider_x(
+        server: Server,
+        used_paths: set[str],
+        generator: SpiderXGenerator,
+        max_attempts: int = 8,
+    ) -> str:
+        """Generate unique spider-x path for non-external servers.
+
+        Args:
+            server: Server to generate path for
+            used_paths: Set of already used paths
+            generator: Spider-x generator instance
+            max_attempts: Max attempts to find a unique path
+
+        Returns:
+            Spider-x path or empty string for external servers
+        """
+        if server.is_external:
+            return ""
+
+        for _ in range(max_attempts):
+            path = generator.generate()
+            if path not in used_paths:
+                used_paths.add(path)
+                return path
+
+        return ""

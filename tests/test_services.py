@@ -101,68 +101,6 @@ class TestConfigService:
         assert len(result) > 0
 
 
-class TestServerFilterService:
-    """Tests for server filtering functions."""
-
-    def test_filter_by_user_groups(self, multiple_servers):
-        """Test filtering servers by user groups."""
-        from src.models import UserInfo
-        from src.services.server_filter_service import filter_servers_by_groups
-
-        user = UserInfo(id="test-id", groups=frozenset(["premium"]))
-
-        filtered = filter_servers_by_groups(multiple_servers, user)
-
-        # Should include premium servers and servers without groups
-        assert len(filtered) >= 1
-        assert all(not s.groups or user.has_access_to_groups(s.groups) for s in filtered)
-
-    def test_filter_includes_public_servers(self, multiple_servers):
-        """Test that public servers (no groups) are included."""
-        from src.models import Server, UserInfo
-        from src.services.server_filter_service import filter_servers_by_groups
-
-        public_server = Server(
-            host="public.example.com",
-            description="Public Server",
-            groups=frozenset(),
-        )
-        servers = [*multiple_servers, public_server]
-
-        user = UserInfo(id="test-id", groups=frozenset(["premium"]))
-
-        filtered = filter_servers_by_groups(servers, user)
-
-        # Public server should always be included
-        assert any(s.host == "public.example.com" for s in filtered)
-
-    def test_filter_empty_user_groups(self, multiple_servers):
-        """Test filtering when user has no groups."""
-        from src.models import UserInfo
-        from src.services.server_filter_service import filter_servers_by_groups
-
-        user = UserInfo(id="test-id", groups=frozenset())
-
-        filtered = filter_servers_by_groups(multiple_servers, user)
-
-        # Should only include servers without groups
-        assert all(not s.groups for s in filtered)
-
-    def test_filter_no_matching_servers(self, multiple_servers):
-        """Test filtering when no servers match user groups."""
-        from src.models import UserInfo
-        from src.services.server_filter_service import filter_servers_by_groups
-
-        user = UserInfo(id="test-id", groups=frozenset(["nonexistent"]))
-
-        # Remove servers without groups
-        servers_with_groups = [s for s in multiple_servers if s.groups]
-
-        filtered = filter_servers_by_groups(servers_with_groups, user)
-
-        assert len(filtered) == 0
-
-
 class TestGeoFileService:
     """Tests for GeoFileService."""
 

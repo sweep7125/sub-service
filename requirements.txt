@@ -1,9 +1,9 @@
-flask>=3.0.0
-waitress>=2.1.2
-pyyaml>=6.0
-requests>=2.31.0
+flask
+waitress
+pyyaml
+requests
 
 # Development and testing dependencies
-pytest>=7.4.0
-pytest-cov>=4.1.0
-pytest-mock>=3.12.0
+pytest
+pytest-cov
+pytest-mock

@@ -63,34 +63,11 @@ class V2RayBuilder(BaseConfigBuilder):
         used_paths: set[str] = set()
 
         for server in eligible:
-            spider_x = self._generate_spider_x(server, used_paths)
+            spider_x = self.generate_spider_x(server, used_paths, self.spiderx_generator)
             link = self._build_link(template, server, user, spider_x)
             links.append(link)
 
         return "\n".join(links).encode("utf-8")
-
-    def _generate_spider_x(self, server: Server, used_paths: set[str]) -> str:
-        """Generate unique spider-x path for non-external servers.
-
-        Args:
-            server: Server to generate path for
-            used_paths: Set of already used paths
-
-        Returns:
-            Spider-x path or empty string for external servers
-        """
-        if server.is_external:
-            return ""
-
-        # Try to generate unique path
-        for _ in range(8):
-            path = self.spiderx_generator.generate()
-            if path not in used_paths:
-                used_paths.add(path)
-                return path
-
-        # Fallback to empty if we can't find unique path
-        return ""
 
     def _build_link(self, template: str, server: Server, user: UserInfo, spider_x: str) -> str:
         """Build a single subscription link from template.

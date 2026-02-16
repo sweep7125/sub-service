@@ -15,7 +15,7 @@ from ..constants import (
     MIME_TYPE_TEXT,
     MIME_TYPE_YAML,
 )
-from ..models import AppConfig
+from ..models import AppConfig, UserInfo
 from ..services import ConfigService, GeoFileService
 from ..utils import get_client_ip
 
@@ -31,34 +31,21 @@ def _is_secure_connection(request_obj: Request) -> bool:
     Returns:
         True if connection is secure (localhost or HTTPS proxy), False otherwise
     """
-    # Check if direct connection from localhost
     remote_addr = request_obj.remote_addr
-    if remote_addr in ("127.0.0.1", "::1", "localhost"):
-        logger.debug(f"Access allowed: localhost connection from {remote_addr}")
-        return True
-
-    # SECURITY FIX: Only trust X-Forwarded-Proto if connection is from localhost
-    # This prevents header spoofing from external connections
-    # In production, nginx should be on localhost connecting via Unix socket
     if remote_addr not in ("127.0.0.1", "::1", "localhost"):
+        logger.warning(f"Access denied: non-localhost connection - Remote: {remote_addr}")
+        return False
+
+    forwarded_proto = request_obj.headers.get("X-Forwarded-Proto", "").lower()
+    if forwarded_proto and forwarded_proto != "https":
         logger.warning(
-            f"Access denied: non-localhost connection attempting to use proxy headers - "
-            f"Remote: {remote_addr}"
+            "Access denied: insecure proxy connection - "
+            f"Remote: {remote_addr}, Proto: {forwarded_proto}"
         )
         return False
 
-    # Check if behind HTTPS reverse proxy (nginx with SSL certificate)
-    forwarded_proto = request_obj.headers.get("X-Forwarded-Proto", "").lower()
-    if forwarded_proto == "https":
-        logger.debug("Access allowed: HTTPS reverse proxy connection")
-        return True
-
-    logger.warning(
-        f"Access denied: insecure connection - "
-        f"Remote: {remote_addr}, "
-        f"Proto: {forwarded_proto or 'none'}"
-    )
-    return False
+    logger.debug(f"Access allowed: localhost connection from {remote_addr}")
+    return True
 
 
 # Happ client user agent pattern
@@ -234,7 +221,7 @@ class WebApplication:
 
         return redirect("/")
 
-    def _parse_user_path(self, user_path: str) -> tuple:
+    def _parse_user_path(self, user_path: str) -> tuple[UserInfo, str]:
         """Parse user path to extract user and format.
 
         Args:
@@ -337,18 +324,12 @@ class WebApplication:
         for header_config in CUSTOM_HEADERS:
             header_name = header_config["name"]
             header_value = header_config["value"]
-            user_agent_regex = header_config.get("user_agent_regex")
+            user_agent_re = header_config.get("user_agent_re")
 
             # If user-agent regex is specified, only apply header if it matches
-            if user_agent_regex:
-                try:
-                    if re.search(user_agent_regex, user_agent):
-                        response.headers[header_name] = header_value
-                except re.error as e:
-                    logger.error(
-                        f"Invalid regex pattern for header '{header_name}': "
-                        f"{user_agent_regex} - {e}"
-                    )
+            if user_agent_re:
+                if user_agent_re.search(user_agent):
+                    response.headers[header_name] = header_value
             else:
                 # No user-agent filter, always apply the header
                 response.headers[header_name] = header_value

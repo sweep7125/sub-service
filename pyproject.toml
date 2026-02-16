@@ -1,0 +1,49 @@
+[project]
+name = "web-panel"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+	"flask",
+	"waitress",
+	"pyyaml",
+	"requests",
+]
+
+[tool.uv]
+dev-dependencies = [
+	"ruff",
+	"pytest",
+	"pytest-cov",
+	"pytest-mock",
+]
+
+[tool.ruff]
+target-version = "py313"
+line-length = 100
+
+[tool.ruff.lint]
+select = [
+	"E",
+	"W",
+	"F",
+	"I",
+	"N",
+	"UP",
+	"B",
+	"C4",
+	"SIM",
+	"RUF",
+]
+ignore = [
+	"E501",
+	"B008",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"

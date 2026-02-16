@@ -66,7 +66,7 @@ class LegacyJsonBuilder(BaseConfigBuilder):
         used_paths: set[str] = set()
 
         for server in eligible:
-            spider_x = self._generate_spider_x(server, used_paths)
+            spider_x = self.generate_spider_x(server, used_paths, self.spiderx_generator)
 
             # Create one config block per template per server
             for template_block in base_blocks:
@@ -74,28 +74,6 @@ class LegacyJsonBuilder(BaseConfigBuilder):
                 configurations.append(config)
 
         return json.dumps(configurations, ensure_ascii=False, indent=2).encode("utf-8")
-
-    def _generate_spider_x(self, server: Server, used_paths: set[str]) -> str:
-        """Generate unique spider-x path for non-external servers.
-
-        Args:
-            server: Server to generate path for
-            used_paths: Set of already used paths
-
-        Returns:
-            Spider-x path or empty string for external servers
-        """
-        if server.is_external:
-            return ""
-
-        # Try to generate unique path
-        for _ in range(8):
-            path = self.spiderx_generator.generate()
-            if path not in used_paths:
-                used_paths.add(path)
-                return path
-
-        return ""
 
     def _build_config_block(
         self, template: JsonDict, server: Server, user: UserInfo, spider_x: str

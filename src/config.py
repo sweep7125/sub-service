@@ -277,6 +277,7 @@ class EnvConfig:
             - name: Header name
             - value: Header value
             - user_agent_regex: Optional regex pattern for User-Agent filtering
+            - user_agent_re: Optional compiled regex pattern
         """
         headers = []
 
@@ -294,6 +295,7 @@ class EnvConfig:
             header_name = parts[0].strip()
             header_value = parts[1].strip()
             user_agent_regex = parts[2].strip() if len(parts) > 2 else None
+            user_agent_re = None
 
             if not header_name or not header_value:
                 logger.warning(f"Empty header name or value in {key}: {value}")
@@ -302,7 +304,7 @@ class EnvConfig:
             # Validate regex if provided
             if user_agent_regex:
                 try:
-                    re.compile(user_agent_regex)
+                    user_agent_re = re.compile(user_agent_regex)
                 except re.error as e:
                     logger.error(f"Invalid regex in {key}: {user_agent_regex} - {e}")
                     continue
@@ -312,6 +314,7 @@ class EnvConfig:
                     "name": header_name,
                     "value": header_value,
                     "user_agent_regex": user_agent_regex,
+                    "user_agent_re": user_agent_re,
                 }
             )
 
