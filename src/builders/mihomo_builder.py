@@ -66,7 +66,13 @@ class MihomoBuilder(BaseConfigBuilder):
 
         # Build proxy configurations
         proxy_template = config.get("proxy-template", {})
-        config["proxies"] = [self._build_proxy(proxy_template, server, user) for server in eligible]
+        generated_proxies = [self._build_proxy(proxy_template, server, user) for server in eligible]
+
+        existing_proxies = config.get("proxies")
+        if isinstance(existing_proxies, list):
+            config["proxies"] = copy.deepcopy(existing_proxies) + generated_proxies
+        else:
+            config["proxies"] = generated_proxies
 
         # Remove template from output
         config.pop("proxy-template", None)

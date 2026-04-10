@@ -3,7 +3,7 @@
 from unittest.mock import patch
 
 from src.models import AppConfig
-from src.web import create_app
+from src.web import _is_allowed_subscription_user_agent, create_app
 
 
 class TestWebApplication:
@@ -138,6 +138,69 @@ class TestWebApplication:
 
             # Should process request (200 or 302 on error)
             assert response.status_code in (200, 302)
+
+    def test_yandex_browser_user_agent_blocked(self, app_config: AppConfig):
+        """Test that Yandex Browser is blocked by user-agent policy."""
+        app = create_app(app_config)
+        client = app.test_client()
+
+        with patch("src.web._is_secure_connection", return_value=True):
+            response = client.get(
+                "/secret/user1",
+                headers={
+                    "User-Agent": (
+                        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                        "(KHTML, like Gecko) Chrome/123.0.0.0 YaBrowser/24.4.1.0 Safari/537.36"
+                    )
+                },
+            )
+
+            # 403 is handled by redirecting to root
+            assert response.status_code == 302
+
+
+class TestUserAgentPolicy:
+    """Tests for subscription user-agent allowlist/denylist policy."""
+
+    def test_allows_common_browser(self):
+        """Common browser user agents should be allowed."""
+        ua = (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+            "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+        )
+        assert _is_allowed_subscription_user_agent(ua)
+
+    def test_blocks_yandex_browser(self):
+        """Yandex Browser user agents should be blocked."""
+        ua = (
+            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+            "(KHTML, like Gecko) Chrome/124.0.0.0 YaBrowser/24.4.1.0 Safari/537.36"
+        )
+        assert not _is_allowed_subscription_user_agent(ua)
+
+    def test_allows_happ_mobile_agents(self):
+        """happ/android and happ/ios should be explicitly allowed."""
+        assert _is_allowed_subscription_user_agent("happ/android")
+        assert _is_allowed_subscription_user_agent("happ/ios")
+
+    def test_allows_happ_full_client_agent(self):
+        """Happ full client user agent with platform/build should be allowed."""
+        assert _is_allowed_subscription_user_agent("Happ/4.7.1/ios/2604040141682")
+        assert _is_allowed_subscription_user_agent("Happ/4.7.1/android/2604040141682")
+
+    def test_blocks_legacy_happ_agent_without_platform(self):
+        """Legacy Happ user agent without platform/build should be blocked."""
+        assert not _is_allowed_subscription_user_agent("Happ/4.7.1")
+
+    def test_allows_flclashx_platform_agents(self):
+        """FlClash X user agents for all desktop platforms should be allowed."""
+        assert _is_allowed_subscription_user_agent("FlClash X/v1.2.3 Platform/macos")
+        assert _is_allowed_subscription_user_agent("FlClash X/v1.2.3 Platform/linux")
+        assert _is_allowed_subscription_user_agent("FlClash X/v1.2.3 Platform/windows")
+
+    def test_blocks_unknown_non_browser_client(self):
+        """Unknown non-browser clients should be blocked by whitelist policy."""
+        assert not _is_allowed_subscription_user_agent("curl/8.6.0")
 
 
 class TestConfigGeneration:

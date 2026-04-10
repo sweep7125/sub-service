@@ -1,5 +1,7 @@
 """Tests for configuration builders."""
 
+import yaml
+
 from src.builders import LegacyJsonBuilder, MihomoBuilder, V2RayBuilder
 from src.models import Server, UserInfo
 
@@ -126,6 +128,49 @@ class TestMihomoBuilder:
         # Both server names should be in the proxy group
         assert "Server 1" in config_str
         assert "Server 2" in config_str
+
+    def test_build_appends_to_existing_proxies(self, sample_user: UserInfo, sample_server: Server):
+        """Test that existing proxies are preserved and generated proxies are appended."""
+        template = {
+            "proxies": [{"name": "DNS-OUT", "type": "dns"}],
+            "proxy-template": {
+                "type": "vless",
+                "uuid": "placeholder",
+                "servername": "placeholder",
+            },
+        }
+
+        builder = MihomoBuilder(template_loader=lambda template_name=None: template)
+        result = builder.build([sample_server], sample_user)
+
+        config = yaml.safe_load(result.decode("utf-8"))
+        proxies = config["proxies"]
+
+        assert len(proxies) == 2
+        assert proxies[0]["name"] == "DNS-OUT"
+        assert proxies[0]["type"] == "dns"
+        assert proxies[1]["name"] == sample_server.description
+
+    def test_build_initializes_proxies_when_missing(
+        self, sample_user: UserInfo, sample_server: Server
+    ):
+        """Test that proxies are created from scratch when missing in template."""
+        template = {
+            "proxy-template": {
+                "type": "vless",
+                "uuid": "placeholder",
+                "servername": "placeholder",
+            }
+        }
+
+        builder = MihomoBuilder(template_loader=lambda template_name=None: template)
+        result = builder.build([sample_server], sample_user)
+
+        config = yaml.safe_load(result.decode("utf-8"))
+        proxies = config["proxies"]
+
+        assert len(proxies) == 1
+        assert proxies[0]["name"] == sample_server.description
 
 
 class TestV2RayBuilder:

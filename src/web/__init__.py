@@ -49,10 +49,51 @@ def _is_secure_connection(request_obj: Request) -> bool:
 
 
 # Happ client user agent pattern
-_HAPP_USER_AGENT_PATTERN: Final[re.Pattern[str]] = re.compile(r"^Happ/\d+\.\d+\.\d+")
+_HAPP_USER_AGENT_PATTERN: Final[re.Pattern[str]] = re.compile(
+    r"^Happ/\d+\.\d+\.\d+/(ios|android)/\d+$", re.IGNORECASE
+)
 
 # Incy client user agent pattern
 _INCY_USER_AGENT_PATTERN: Final[re.Pattern[str]] = re.compile(r"^Incy/\d+\.\d+\.\d+", re.IGNORECASE)
+
+# Explicitly allowed non-browser clients
+_HAPP_MOBILE_USER_AGENT_PATTERN: Final[re.Pattern[str]] = re.compile(
+    r"^happ/(android|ios)$", re.IGNORECASE
+)
+_FLCLASHX_USER_AGENT_PATTERN: Final[re.Pattern[str]] = re.compile(
+    r"^FlClash X/v\d+\.\d+\.\d+(?:[-+][^\s]+)? Platform/(macos|linux|windows)$",
+    re.IGNORECASE,
+)
+
+# Browser policy: allow common browsers, block Yandex Browser
+_YANDEX_BROWSER_USER_AGENT_PATTERN: Final[re.Pattern[str]] = re.compile(
+    r"YaBrowser|Yowser", re.IGNORECASE
+)
+_COMMON_BROWSER_USER_AGENT_PATTERN: Final[re.Pattern[str]] = re.compile(
+    r"Mozilla/|Chrome/|CriOS/|Firefox/|FxiOS/|Safari/|Edg/|OPR/|Opera",
+    re.IGNORECASE,
+)
+
+
+def _is_allowed_subscription_user_agent(user_agent: str) -> bool:
+    """Validate whether the subscription can be served for this User-Agent."""
+    normalized_ua = user_agent.strip()
+    if not normalized_ua:
+        return False
+
+    # Explicitly allow known app clients first.
+    if _HAPP_MOBILE_USER_AGENT_PATTERN.match(normalized_ua):
+        return True
+    if _FLCLASHX_USER_AGENT_PATTERN.match(normalized_ua):
+        return True
+    if _HAPP_USER_AGENT_PATTERN.match(normalized_ua):
+        return True
+
+    # For browsers: block Yandex Browser, allow other common browsers.
+    if _YANDEX_BROWSER_USER_AGENT_PATTERN.search(normalized_ua):
+        return False
+
+    return _COMMON_BROWSER_USER_AGENT_PATTERN.search(normalized_ua) is not None
 
 
 class WebApplication:
@@ -160,6 +201,10 @@ class WebApplication:
         """
         client_ip = getattr(g, "client_ip", "unknown")
         user_agent = request.headers.get("User-Agent", "N/A")
+
+        if not _is_allowed_subscription_user_agent(user_agent):
+            logger.warning(f"Blocked by User-Agent policy - IP: {client_ip} - UA: {user_agent}")
+            abort(403)
 
         # Parse user path
         user, format_type = self._parse_user_path(user_path)
