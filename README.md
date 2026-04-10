@@ -58,6 +58,25 @@ GET /{secret}/{user_path}/{format}
 
 Formats: `json`, `v2ray`, `mihomo` (also `clash`, `mh`, `type3`).
 
+## User-Agent Policy
+
+Subscription response policy can be tuned via `.env` regex variables:
+
+- `SUBSCRIPTION_UA_WHITELIST_PATTERN`
+- `SUBSCRIPTION_UA_BLOCKLIST_PATTERN`
+
+Behavior:
+
+- `SUBSCRIPTION_UA_WHITELIST_PATTERN`:
+   - empty -> allow all
+   - non-empty -> allow only matching User-Agent values
+- `SUBSCRIPTION_UA_BLOCKLIST_PATTERN`:
+   - empty -> block nothing
+   - non-empty -> block matching User-Agent values
+
+Both rules are applied together (allow by whitelist first, then deny by blocklist).
+If a regex in `.env` is invalid, the service logs a warning and ignores that rule.
+
 ## Custom headers
 
 Optional env vars:

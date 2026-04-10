@@ -104,7 +104,7 @@ class TestWebApplication:
             # Request with specific user agent
             response = client.get(
                 "/secret/user1",
-                headers={"User-Agent": "Happ/1.0.0"},
+                headers={"User-Agent": "Happ/4.7.1/ios/2604040141682"},
             )
 
             # Should process request (200 or 302 on error)

@@ -132,6 +132,29 @@ class EnvConfig:
 
         return [item.strip() for item in value.split(separator) if item.strip()]
 
+    def get_optional_regex(
+        self, key: str, default: str = "", flags: int = 0
+    ) -> re.Pattern[str] | None:
+        """Get optional compiled regex from environment.
+
+        Args:
+            key: Environment variable name
+            default: Default regex pattern if key is missing
+            flags: Regex compilation flags
+
+        Returns:
+            Compiled regex pattern or None when pattern is empty/invalid
+        """
+        pattern = self.get_str(key, default).strip()
+        if not pattern:
+            return None
+
+        try:
+            return re.compile(pattern, flags)
+        except re.error as e:
+            logger.warning(f"Invalid regex in {key}: {pattern} - {e}. Pattern ignored.")
+            return None
+
     # Security settings
     @property
     def secret_path(self) -> str:
@@ -269,6 +292,34 @@ class EnvConfig:
     def worker_threads(self) -> int:
         """Get number of worker threads."""
         return self.get_int("WORKER_THREADS", 1)
+
+    # User-Agent policy settings
+    @property
+    def subscription_user_agent_whitelist_pattern(self) -> re.Pattern[str] | None:
+        """Get whitelist regex for subscription access User-Agent policy.
+
+        Empty pattern means "allow all".
+        """
+        return self.get_optional_regex(
+            "SUBSCRIPTION_UA_WHITELIST_PATTERN",
+            (
+                r"Mozilla/|Chrome/|CriOS/|Firefox/|FxiOS/|Safari/|Edg/|OPR/|Opera"
+                r"|^happ/(android|ios)$"
+                r"|^Happ/\d+\.\d+\.\d+/(ios|android)/\d+$"
+                r"|^FlClash X/v\d+\.\d+\.\d+(?:[-+][^\s]+)? Platform/(macos|linux|windows)$"
+            ),
+            re.IGNORECASE,
+        )
+
+    @property
+    def subscription_user_agent_blocklist_pattern(self) -> re.Pattern[str] | None:
+        """Get blocklist regex for subscription access User-Agent policy.
+
+        Empty pattern means "block nothing".
+        """
+        return self.get_optional_regex(
+            "SUBSCRIPTION_UA_BLOCKLIST_PATTERN", r"YaBrowser|Yowser", re.IGNORECASE
+        )
 
     @property
     def custom_headers(self) -> list[dict[str, str]]:

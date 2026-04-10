@@ -128,6 +128,8 @@ def app_config(
     """Create AppConfig for testing."""
     happ_routing = temp_dir / "happ.routing"
     happ_routing.write_text("{}", encoding="utf-8")
+    incy_routing = temp_dir / "incy.routing"
+    incy_routing.write_text("{}", encoding="utf-8")
     return AppConfig(
         base_dir=temp_dir,
         cache_dir=temp_dir / "cache",
@@ -137,6 +139,7 @@ def app_config(
         v2ray_template_file=sample_v2ray_json_template,
         mihomo_template_file=sample_mihomo_template,
         happ_routing_file=happ_routing,
+        incy_routing_file=incy_routing,
         geo_cache_ttl=3600,
     )
 
