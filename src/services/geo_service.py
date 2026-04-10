@@ -50,11 +50,12 @@ class GeoFileService:
         last_updated = self._check_updates(metadata, now)
         return last_updated
 
-    def build_routing_header(self, routing_template: dict[str, Any]) -> str:
-        """Build routing header value for Happ clients.
+    def build_routing_header(self, routing_template: dict[str, Any], scheme: str = "happ") -> str:
+        """Build routing header value for Happ/Incy clients.
 
         Args:
             routing_template: Routing configuration template
+            scheme: URL scheme prefix (e.g. "happ" or "incy")
 
         Returns:
             Base64-encoded routing header value
@@ -68,7 +69,7 @@ class GeoFileService:
         try:
             json_str = json.dumps(template, ensure_ascii=False, separators=(",", ":"))
             b64 = base64.b64encode(json_str.encode("utf-8")).decode("ascii")
-            return f"happ://routing/onadd/{b64}"
+            return f"{scheme}://routing/onadd/{b64}"
         except (TypeError, UnicodeEncodeError, ValueError) as e:
             logger.warning(f"Failed to build routing header: {e}")
             return ""

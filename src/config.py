@@ -206,6 +206,13 @@ class EnvConfig:
         path = Path(custom)
         return path if path.is_absolute() else self.base_dir / path
 
+    @property
+    def incy_routing_file(self) -> Path:
+        """Get Incy routing file path."""
+        custom = self.get_str("INCY_ROUTING_FILE", "happ.routing")
+        path = Path(custom)
+        return path if path.is_absolute() else self.base_dir / path
+
     # Cache settings
     @property
     def geo_cache_ttl(self) -> int:

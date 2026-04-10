@@ -51,6 +51,9 @@ def _is_secure_connection(request_obj: Request) -> bool:
 # Happ client user agent pattern
 _HAPP_USER_AGENT_PATTERN: Final[re.Pattern[str]] = re.compile(r"^Happ/\d+\.\d+\.\d+")
 
+# Incy client user agent pattern
+_INCY_USER_AGENT_PATTERN: Final[re.Pattern[str]] = re.compile(r"^Incy/\d+\.\d+\.\d+", re.IGNORECASE)
+
 
 class WebApplication:
     """Main web application for VPN/Proxy configuration distribution."""
@@ -79,6 +82,9 @@ class WebApplication:
 
         # Load Happ routing config
         self._happ_routing_config = self._load_happ_routing()
+
+        # Load Incy routing config
+        self._incy_routing_config = self._load_incy_routing()
 
     def _register_middleware(self) -> None:
         """Register Flask middleware for logging."""
@@ -341,6 +347,13 @@ class WebApplication:
             if routing_header:
                 response.headers["routing"] = routing_header
 
+        if _INCY_USER_AGENT_PATTERN.match(user_agent):
+            routing_header = self.geo_service.build_routing_header(
+                self._incy_routing_config, scheme="incy"
+            )
+            if routing_header:
+                response.headers["routing"] = routing_header
+
         return response
 
     def _load_happ_routing(self) -> dict:
@@ -361,6 +374,26 @@ class WebApplication:
             return {}
         except OSError as e:
             logger.error(f"Failed to load happ routing file: {e}")
+            return {}
+
+    def _load_incy_routing(self) -> dict:
+        """Load Incy routing configuration.
+
+        Returns:
+            Routing configuration dictionary
+        """
+        try:
+            with self.config.incy_routing_file.open("r", encoding="utf-8") as f:
+                data = json.load(f)
+                return data if isinstance(data, dict) else {}
+        except FileNotFoundError:
+            logger.info("Incy routing file not found, using empty configuration")
+            return {}
+        except json.JSONDecodeError as e:
+            logger.error(f"Invalid JSON in incy routing file: {e}")
+            return {}
+        except OSError as e:
+            logger.error(f"Failed to load incy routing file: {e}")
             return {}
 
 

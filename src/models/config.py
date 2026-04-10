@@ -16,6 +16,7 @@ class AppConfig:
         v2ray_template_file: Path to V2Ray JSON template
         mihomo_template_file: Path to Mihomo YAML template
         happ_routing_file: Path to Happ routing configuration
+        incy_routing_file: Path to Incy routing configuration
         cache_dir: Directory for caching data
         geo_cache_ttl: TTL for geo files cache in seconds
     """
@@ -27,6 +28,7 @@ class AppConfig:
     v2ray_template_file: Path
     mihomo_template_file: Path
     happ_routing_file: Path
+    incy_routing_file: Path
     cache_dir: Path
     geo_cache_ttl: int = 600
 
@@ -64,6 +66,7 @@ class AppConfig:
             v2ray_template_file=v2ray_template,
             mihomo_template_file=mihomo_template,
             happ_routing_file=env_config.happ_routing_file,
+            incy_routing_file=env_config.incy_routing_file,
             cache_dir=env_config.cache_dir,
             geo_cache_ttl=env_config.geo_cache_ttl,
         )
