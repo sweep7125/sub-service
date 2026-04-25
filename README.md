@@ -79,11 +79,22 @@ sudo ./scripts/install-debian.sh install # fresh install
 sudo ./scripts/install-debian.sh update  # code-only update
 ```
 
+Remote install/update without git clone:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/sweep7125/sub-service/main/scripts/install-debian.sh | sudo bash -s -- install
+curl -fsSL https://raw.githubusercontent.com/sweep7125/sub-service/main/scripts/install-debian.sh | sudo bash -s -- update
+
+wget -qO- https://raw.githubusercontent.com/sweep7125/sub-service/main/scripts/install-debian.sh | sudo bash -s -- install
+wget -qO- https://raw.githubusercontent.com/sweep7125/sub-service/main/scripts/install-debian.sh | sudo bash -s -- update
+```
+
 Default target: `/opt/sub-stub`.
 
 Usage notes:
 
-- run from repo root as `root` or via `sudo`
+- local mode: run from repo root as `root` or via `sudo`
+- remote mode downloads source archive from GitHub branch `main`; override with `REPO_ARCHIVE_URL=...` or `REPO_REF=...`
 - `auto` picks `install` when `/opt/sub-stub/app.py` is missing, else `update`
 - installer checks missing system packages and installs them with `apt`
 - on first install it creates `/opt/sub-stub/.env` from `.env.example`

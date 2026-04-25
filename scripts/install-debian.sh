@@ -6,11 +6,17 @@ APP_USER="${APP_USER:-sub-stub}"
 APP_GROUP="${APP_GROUP:-sub-stub}"
 INSTALL_DIR="${INSTALL_DIR:-/opt/sub-stub}"
 SYSTEMD_UNIT="${SYSTEMD_UNIT:-/etc/systemd/system/sub-stub.service}"
+REPO_OWNER="${REPO_OWNER:-sweep7125}"
+REPO_NAME="${REPO_NAME:-sub-service}"
+REPO_REF="${REPO_REF:-main}"
+REPO_ARCHIVE_URL="${REPO_ARCHIVE_URL:-https://codeload.github.com/${REPO_OWNER}/${REPO_NAME}/tar.gz/refs/heads/${REPO_REF}}"
 MODE="${1:-auto}"
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+SCRIPT_PATH="$0"
+SCRIPT_DIR="$(cd "$(dirname "${SCRIPT_PATH}")" 2>/dev/null && pwd || pwd)"
+REPO_DIR="$(cd "${SCRIPT_DIR}/.." 2>/dev/null && pwd || pwd)"
 VENV_DIR="${INSTALL_DIR}/.venv"
+BOOTSTRAP_DIR=""
 
 log() {
   printf '[%s] %s\n' "$APP_NAME" "$*"
@@ -20,6 +26,14 @@ die() {
   log "error: $*"
   exit 1
 }
+
+cleanup() {
+  if [ -n "${BOOTSTRAP_DIR:-}" ] && [ -d "$BOOTSTRAP_DIR" ]; then
+    rm -rf "$BOOTSTRAP_DIR"
+  fi
+}
+
+trap cleanup EXIT
 
 need_root() {
   [ "${EUID}" -eq 0 ] || die "run as root"
@@ -65,6 +79,32 @@ have_command() {
   command -v "$1" >/dev/null 2>&1
 }
 
+source_tree_ready_at() {
+  local repo_dir="$1"
+
+  [ -f "${repo_dir}/app.py" ] &&
+    [ -f "${repo_dir}/main.py" ] &&
+    [ -f "${repo_dir}/requirements.txt" ] &&
+    [ -f "${repo_dir}/sub-stub.service" ] &&
+    [ -d "${repo_dir}/scripts" ] &&
+    [ -d "${repo_dir}/src" ] &&
+    [ -d "${repo_dir}/templates" ]
+}
+
+source_tree_ready() {
+  source_tree_ready_at "${REPO_DIR}"
+}
+
+resolve_repo_dir() {
+  if source_tree_ready; then
+    return
+  fi
+
+  if source_tree_ready_at "$(pwd)"; then
+    REPO_DIR="$(pwd)"
+  fi
+}
+
 append_missing_package() {
   local package="$1"
   local existing
@@ -92,6 +132,14 @@ detect_missing_packages() {
 
   [ -e /etc/ssl/certs/ca-certificates.crt ] || append_missing_package ca-certificates
 
+  if ! source_tree_ready; then
+    if ! have_command curl && ! have_command wget; then
+      append_missing_package curl
+    fi
+
+    have_command tar || append_missing_package tar
+  fi
+
   printf '%s\n' "${missing_packages[@]}"
 }
 
@@ -117,6 +165,47 @@ install_packages() {
   export DEBIAN_FRONTEND=noninteractive
   apt-get update
   apt-get install -y --no-install-recommends "${missing_packages[@]}"
+}
+
+download_file() {
+  local url="$1"
+  local dst="$2"
+
+  if have_command curl; then
+    curl -fsSL "$url" -o "$dst"
+    return
+  fi
+
+  if have_command wget; then
+    wget -qO "$dst" "$url"
+    return
+  fi
+
+  die "need curl or wget to download ${url}"
+}
+
+bootstrap_repo_dir() {
+  local archive_path
+  local extracted_dir
+
+  if source_tree_ready; then
+    log "using local source tree: ${REPO_DIR}"
+    return
+  fi
+
+  BOOTSTRAP_DIR="$(mktemp -d)"
+  archive_path="${BOOTSTRAP_DIR}/source.tar.gz"
+
+  log "local source tree missing, download ${REPO_ARCHIVE_URL}"
+  download_file "${REPO_ARCHIVE_URL}" "${archive_path}"
+  tar -xzf "${archive_path}" -C "${BOOTSTRAP_DIR}"
+
+  extracted_dir="$(find "${BOOTSTRAP_DIR}" -mindepth 1 -maxdepth 1 -type d | head -n 1)"
+  [ -n "$extracted_dir" ] || die "downloaded archive has no source directory"
+
+  REPO_DIR="$extracted_dir"
+  source_tree_ready || die "downloaded source tree incomplete: ${REPO_DIR}"
+  log "using downloaded source tree: ${REPO_DIR}"
 }
 
 ensure_user() {
@@ -290,9 +379,11 @@ main() {
   need_root
   check_platform
   resolve_mode
+  resolve_repo_dir
 
   log "mode: ${MODE}"
   install_packages
+  bootstrap_repo_dir
   ensure_user
   ensure_layout
 
