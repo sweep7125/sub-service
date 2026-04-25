@@ -131,6 +131,36 @@ class EnvConfig:
 
         return (base_dir or self.base_dir) / path
 
+    def resolve_profile_path(
+        self,
+        key: str,
+        default: str | Path,
+        base_dir: Path | None = None,
+        *,
+        legacy_key: str | None = None,
+        legacy_default: str | Path | None = None,
+    ) -> Path:
+        """Resolve profile path with optional legacy fallback.
+
+        Preference order:
+        1. New env var
+        2. Legacy env var
+        3. New default path
+        4. Legacy default path when new default does not exist
+        """
+        if key in os.environ:
+            return self.resolve_path(key, default, base_dir)
+
+        if legacy_key and legacy_key in os.environ:
+            return self.resolve_path(legacy_key, legacy_default or default, base_dir)
+
+        resolved_default = self.resolve_path(key, default, base_dir)
+        if resolved_default.exists() or legacy_default is None:
+            return resolved_default
+
+        legacy_path = self.resolve_path(legacy_key or key, legacy_default, base_dir)
+        return legacy_path if legacy_path.exists() else resolved_default
+
     def get_list(
         self, key: str, default: list[str] | None = None, separator: str = ","
     ) -> list[str]:
@@ -229,10 +259,37 @@ class EnvConfig:
         return self.resolve_path("USERS_FILE", "users")
 
     @property
+    def v2ray_profile_file(self) -> Path:
+        """Get V2Ray subscription base file path."""
+        return self.resolve_profile_path(
+            "V2RAY_TEMPLATE_FILE",
+            "templates/v2ray.lst",
+            legacy_key="TEMPLATE_FILE",
+            legacy_default="templates/v2ray-url-template.txt",
+        )
+
+    @property
+    def xray_profile_file(self) -> Path:
+        """Get Xray JSON base file path."""
+        return self.resolve_profile_path(
+            "XRAY_TEMPLATE_FILE",
+            "templates/xray.json",
+            legacy_default="templates/v2ray-template.json",
+        )
+
+    @property
+    def mihomo_profile_file(self) -> Path:
+        """Get Mihomo base file path."""
+        return self.resolve_profile_path(
+            "MIHOMO_TEMPLATE_FILE",
+            "templates/mihomo.yaml",
+            legacy_default="templates/mihomo-template.yaml",
+        )
+
+    @property
     def template_file(self) -> Path:
-        """Get V2Ray URL template file path."""
-        # Support legacy TEMPLATE_FILE env var
-        return self.resolve_path("TEMPLATE_FILE", "templates/v2ray-url-template.txt")
+        """Legacy alias for V2Ray subscription base file path."""
+        return self.v2ray_profile_file
 
     @property
     def happ_routing_file(self) -> Path:
@@ -249,11 +306,6 @@ class EnvConfig:
     def geo_cache_ttl(self) -> int:
         """Get geo cache TTL in seconds."""
         return self.get_int("GEO_CACHE_TTL", 600)
-
-    @property
-    def enable_file_cache(self) -> bool:
-        """Check if file cache is enabled."""
-        return self.get_bool("ENABLE_FILE_CACHE", True)
 
     # Geo files settings
     @property

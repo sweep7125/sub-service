@@ -83,6 +83,33 @@ class TestWebApplication:
             assert response.mimetype == "application/yaml"
             assert b"proxies:" in response.data
 
+    def test_mihomo_profile_selected_by_user_agent(self, app_config: AppConfig):
+        """Matching Mihomo keyword profile should be used for response."""
+        variant = app_config.mihomo_profile_file.parent / "mihomo_cmfa.yaml"
+        variant.write_text(
+            """profile: cmfa
+proxy-template:
+  type: vless
+  servername: example.com
+  reality-opts:
+    public-key: ""
+    short-id: ""
+""",
+            encoding="utf-8",
+        )
+
+        app = create_app(app_config)
+        client = app.test_client()
+
+        with patch("src.web._is_secure_connection", return_value=True):
+            response = client.get(
+                "/secret/user1/mihomo",
+                headers={"User-Agent": "Mozilla/5.0 cmfa/android"},
+            )
+
+            assert response.status_code == 200
+            assert b"profile: cmfa" in response.data
+
     def test_v2ray_config_format(self, app_config: AppConfig):
         """Test requesting V2Ray format configuration."""
         app = create_app(app_config)
@@ -98,6 +125,26 @@ class TestWebApplication:
             assert response.mimetype == "text/plain"
             assert b"vless://" in response.data
 
+    def test_v2ray_profile_selected_by_user_agent(self, app_config: AppConfig):
+        """Matching V2Ray keyword profile should be used for response."""
+        variant = app_config.v2ray_profile_file.parent / "v2ray_android.lst"
+        variant.write_text(
+            "vless://<ID>@<ADDRESS>:443?type=tcp#android-<NAME>",
+            encoding="utf-8",
+        )
+
+        app = create_app(app_config)
+        client = app.test_client()
+
+        with patch("src.web._is_secure_connection", return_value=True):
+            response = client.get(
+                "/secret/user1/sub/v2ray",
+                headers={"User-Agent": "Mozilla/5.0 cmfa/android"},
+            )
+
+            assert response.status_code == 200
+            assert b"#android-" in response.data
+
     def test_json_config_format(self, app_config: AppConfig):
         """Test requesting JSON format configuration."""
         app = create_app(app_config)
@@ -112,6 +159,40 @@ class TestWebApplication:
             assert response.status_code == 200
             assert response.mimetype == "application/json"
             assert response.data.startswith(b"[")
+
+    def test_json_profile_selected_by_user_agent(self, app_config: AppConfig):
+        """Matching Xray keyword profile should be used for response."""
+        variant = app_config.xray_profile_file.parent / "xray_android.json"
+        variant.write_text(
+            """[
+  {
+    "remarks": "android",
+    "outbounds": [
+      {
+        "protocol": "vless",
+        "settings": {
+          "address": null,
+          "port": 443,
+          "id": null
+        }
+      }
+    ]
+  }
+]""",
+            encoding="utf-8",
+        )
+
+        app = create_app(app_config)
+        client = app.test_client()
+
+        with patch("src.web._is_secure_connection", return_value=True):
+            response = client.get(
+                "/secret/user1",
+                headers={"User-Agent": "Mozilla/5.0 Android"},
+            )
+
+            assert response.status_code == 200
+            assert b'"remarks": "Server 1 | android"' in response.data
 
     def test_invalid_user_returns_404(self, app_config: AppConfig):
         """Test that invalid user returns 404."""
@@ -280,7 +361,9 @@ class TestConfigGeneration:
         from src.models import UserInfo
 
         user = UserInfo(id="test-id", groups=frozenset(["admin"]))
-        builder = MihomoBuilder(template_loader=lambda template_name=None: {"proxy-template": {}})
+        builder = MihomoBuilder(
+            template_loader=lambda template_name=None, user_agent="": {"proxy-template": {}}
+        )
 
         try:
             builder.build([], user)

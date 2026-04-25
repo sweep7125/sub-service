@@ -46,9 +46,20 @@ host | sni | dns | public_key | description | groups | type | uuid | short_id
 - `uuid` and `short_id` are used for external servers.
 
 ### templates
-- `templates/v2ray-template.json`
-- `templates/mihomo-template.yaml`
-- `templates/v2ray-url-template.txt`
+- `templates/xray.json`
+- `templates/mihomo.yaml`
+- `templates/v2ray.lst`
+- optional keyword variants in same folder:
+  - `mihomo_android.yaml`
+  - `xray_cmfa_android.json`
+  - `v2ray_clashmeta.lst`
+
+Keyword rules:
+- suffix after first `_` is keyword list
+- match is case-insensitive substring against request `User-Agent`
+- multiple `_` mean OR match (`mihomo_cmfa_android.yaml` -> `cmfa` or `android`)
+- if no keyword variant matches, service uses base file
+- `mihomo_advanced`, if set, still uses exact filename from `templates/`
 
 ## Endpoint
 
@@ -57,6 +68,37 @@ GET /{secret}/{user_path}/{format}
 ```
 
 Formats: `json`, `v2ray`, `mihomo` (also `clash`, `mh`, `type3`).
+
+## Deploy
+
+Debian 13 installer/updater:
+
+```bash
+sudo ./scripts/install-debian.sh         # auto: install or update
+sudo ./scripts/install-debian.sh install # fresh install
+sudo ./scripts/install-debian.sh update  # code-only update
+```
+
+Default target: `/opt/sub-stub`.
+
+Install mode copies runtime files, `servers`, `users`, `.env.example`, `.env`, templates, and installs default systemd unit.
+
+Update mode refreshes only runtime code:
+
+- `app.py`
+- `main.py`
+- `requirements.txt`
+- `scripts/`
+- `src/`
+
+Update mode does not touch:
+
+- `servers`
+- `users`
+- `.env`
+- `templates/`
+- `happ.routing`
+- installed systemd unit
 
 ## User-Agent Policy
 

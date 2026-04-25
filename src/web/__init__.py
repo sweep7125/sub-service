@@ -233,10 +233,10 @@ class WebApplication:
         # Generate appropriate configuration
         try:
             if format_type == "v2ray":
-                return self._build_v2ray_response(servers, user)
+                return self._build_v2ray_response(servers, user, user_agent)
             if format_type == "mihomo":
-                return self._build_mihomo_response(servers, user)
-            return self._build_json_response(servers, user)
+                return self._build_mihomo_response(servers, user, user_agent)
+            return self._build_json_response(servers, user, user_agent)
 
         except ValueError as e:
             # User has no access to any servers
@@ -309,31 +309,33 @@ class WebApplication:
 
         return user, format_type
 
-    def _build_v2ray_response(self, servers, user) -> Response:
+    def _build_v2ray_response(self, servers, user, user_agent: str) -> Response:
         """Build V2Ray subscription response.
 
         Args:
             servers: Available servers
             user: User credentials
+            user_agent: Request User-Agent
 
         Returns:
             Text response with subscription links
         """
-        content = self.config_service.build_v2ray_config(servers, user)
+        content = self.config_service.build_v2ray_config(servers, user, user_agent=user_agent)
         response = Response(content, mimetype=MIME_TYPE_TEXT)
         return self._apply_headers(response)
 
-    def _build_mihomo_response(self, servers, user) -> Response:
+    def _build_mihomo_response(self, servers, user, user_agent: str) -> Response:
         """Build Mihomo/Clash configuration response.
 
         Args:
             servers: Available servers
             user: User credentials
+            user_agent: Request User-Agent
 
         Returns:
             YAML file response
         """
-        content = self.config_service.build_mihomo_config(servers, user)
+        content = self.config_service.build_mihomo_config(servers, user, user_agent=user_agent)
         response = Response(content, mimetype=MIME_TYPE_YAML)
         response = self._apply_headers(response)
 
@@ -342,17 +344,18 @@ class WebApplication:
 
         return response
 
-    def _build_json_response(self, servers, user) -> Response:
+    def _build_json_response(self, servers, user, user_agent: str) -> Response:
         """Build legacy JSON configuration response.
 
         Args:
             servers: Available servers
             user: User credentials
+            user_agent: Request User-Agent
 
         Returns:
             JSON response
         """
-        content = self.config_service.build_legacy_config(servers, user)
+        content = self.config_service.build_legacy_config(servers, user, user_agent=user_agent)
         response = Response(content, mimetype=MIME_TYPE_JSON)
         return self._apply_headers(response)
 

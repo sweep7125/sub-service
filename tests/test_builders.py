@@ -22,7 +22,7 @@ class TestMihomoBuilder:
             "proxy-groups": [{"name": "auto", "type": "url-test", "proxies": "__PROXY_NAMES__"}],
         }
 
-        builder = MihomoBuilder(template_loader=lambda template_name=None: template)
+        builder = MihomoBuilder(template_loader=lambda template_name=None, user_agent="": template)
         result = builder.build([sample_server], sample_user)
 
         assert isinstance(result, bytes)
@@ -55,7 +55,7 @@ class TestMihomoBuilder:
             }
         }
 
-        builder = MihomoBuilder(template_loader=lambda template_name=None: template)
+        builder = MihomoBuilder(template_loader=lambda template_name=None, user_agent="": template)
         result = builder.build([ext_server], sample_user)
 
         config_str = result.decode("utf-8")
@@ -80,7 +80,7 @@ class TestMihomoBuilder:
         ]
 
         template = {"proxy-template": {"type": "vless"}}
-        builder = MihomoBuilder(template_loader=lambda template_name=None: template)
+        builder = MihomoBuilder(template_loader=lambda template_name=None, user_agent="": template)
 
         # User with premium group
         result = builder.build(servers, sample_user)
@@ -100,7 +100,7 @@ class TestMihomoBuilder:
         ]
 
         template = {"proxy-template": {"type": "vless"}}
-        builder = MihomoBuilder(template_loader=lambda template_name=None: template)
+        builder = MihomoBuilder(template_loader=lambda template_name=None, user_agent="": template)
 
         # Should raise ValueError
         try:
@@ -121,7 +121,7 @@ class TestMihomoBuilder:
             "proxy-groups": [{"name": "auto", "proxies": "__PROXY_NAMES__"}],
         }
 
-        builder = MihomoBuilder(template_loader=lambda template_name=None: template)
+        builder = MihomoBuilder(template_loader=lambda template_name=None, user_agent="": template)
         result = builder.build(servers, sample_user)
         config_str = result.decode("utf-8")
 
@@ -140,7 +140,7 @@ class TestMihomoBuilder:
             },
         }
 
-        builder = MihomoBuilder(template_loader=lambda template_name=None: template)
+        builder = MihomoBuilder(template_loader=lambda template_name=None, user_agent="": template)
         result = builder.build([sample_server], sample_user)
 
         config = yaml.safe_load(result.decode("utf-8"))
@@ -163,7 +163,7 @@ class TestMihomoBuilder:
             }
         }
 
-        builder = MihomoBuilder(template_loader=lambda template_name=None: template)
+        builder = MihomoBuilder(template_loader=lambda template_name=None, user_agent="": template)
         result = builder.build([sample_server], sample_user)
 
         config = yaml.safe_load(result.decode("utf-8"))
@@ -180,7 +180,7 @@ class TestV2RayBuilder:
         """Test building basic V2Ray subscription."""
         template = "vless://<ID>@<ADDRESS>:443?sni=<SERVERNAME>&spx=%2F<SPIDERX>#<NAME>"
 
-        builder = V2RayBuilder(template_loader=lambda: template)
+        builder = V2RayBuilder(template_loader=lambda user_agent="": template)
         result = builder.build([sample_server], sample_user)
 
         assert isinstance(result, bytes)
@@ -200,7 +200,7 @@ class TestV2RayBuilder:
 
         template = "vless://<ID>@<ADDRESS>:443#<NAME>"
 
-        builder = V2RayBuilder(template_loader=lambda: template)
+        builder = V2RayBuilder(template_loader=lambda user_agent="": template)
         result = builder.build(servers, sample_user)
 
         links = result.decode("utf-8").split("\n")
@@ -219,7 +219,7 @@ class TestV2RayBuilder:
 
         template = "vless://<ID>@<ADDRESS>:443?spx=%2F<SPIDERX>#<NAME>"
 
-        builder = V2RayBuilder(template_loader=lambda: template)
+        builder = V2RayBuilder(template_loader=lambda user_agent="": template)
         result = builder.build([server], sample_user)
 
         link = result.decode("utf-8")
@@ -239,7 +239,7 @@ class TestV2RayBuilder:
 
         template = "vless://<ID>@<ADDRESS>:443?spx=%2F<SPIDERX>#<NAME>"
 
-        builder = V2RayBuilder(template_loader=lambda: template)
+        builder = V2RayBuilder(template_loader=lambda user_agent="": template)
         result = builder.build([server], sample_user)
 
         link = result.decode("utf-8")
@@ -259,7 +259,7 @@ class TestV2RayBuilder:
 
         template = "vless://<ID>@<ADDRESS>:443#<NAME>"
 
-        builder = V2RayBuilder(template_loader=lambda: template)
+        builder = V2RayBuilder(template_loader=lambda user_agent="": template)
         result = builder.build(servers, sample_user)
 
         links_str = result.decode("utf-8")
@@ -277,7 +277,7 @@ class TestV2RayBuilder:
 
         template = "vless://<ID>@<ADDRESS>:443?sni=<SERVERNAME>#<NAME>"
 
-        builder = V2RayBuilder(template_loader=lambda: template)
+        builder = V2RayBuilder(template_loader=lambda user_agent="": template)
         result = builder.build([server], sample_user)
 
         link = result.decode("utf-8")
@@ -309,7 +309,7 @@ class TestLegacyJsonBuilder:
             }
         ]
 
-        builder = LegacyJsonBuilder(json_loader=lambda: template)
+        builder = LegacyJsonBuilder(json_loader=lambda user_agent="": template)
         result = builder.build([sample_server], sample_user)
 
         assert isinstance(result, bytes)
@@ -347,7 +347,7 @@ class TestLegacyJsonBuilder:
             }
         ]
 
-        builder = LegacyJsonBuilder(json_loader=lambda: template)
+        builder = LegacyJsonBuilder(json_loader=lambda user_agent="": template)
         result = builder.build(servers, sample_user)
 
         config_str = result.decode("utf-8")
@@ -389,7 +389,7 @@ class TestLegacyJsonBuilder:
             }
         ]
 
-        builder = LegacyJsonBuilder(json_loader=lambda: template)
+        builder = LegacyJsonBuilder(json_loader=lambda user_agent="": template)
         result = builder.build([sample_server], sample_user)
 
         assert isinstance(result, bytes)

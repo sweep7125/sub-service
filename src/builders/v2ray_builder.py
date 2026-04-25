@@ -20,13 +20,13 @@ class V2RayBuilder(BaseConfigBuilder):
 
     def __init__(
         self,
-        template_loader: Callable[[], str],
+        template_loader: Callable[[str], str],
         spiderx_generator: SpiderXGenerator | None = None,
     ) -> None:
         """Initialize V2Ray builder.
 
         Args:
-            template_loader: Function to load URL template
+            template_loader: Function to load URL template by User-Agent
             spiderx_generator: Generator for spider-x paths
         """
         self.template_loader = template_loader
@@ -36,17 +36,19 @@ class V2RayBuilder(BaseConfigBuilder):
         self,
         servers: list[Server],
         user: UserInfo,
+        user_agent: str = "",
     ) -> bytes:
         """Build V2Ray subscription links.
 
         Args:
             servers: List of available servers
             user: User credentials
+            user_agent: Request User-Agent for keyword profile selection
 
         Returns:
             Newline-separated subscription links as bytes
         """
-        template = self.template_loader()
+        template = self.template_loader(user_agent)
         if not template:
             logger.warning("V2Ray template is empty")
             return b""

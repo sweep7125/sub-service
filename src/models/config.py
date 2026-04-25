@@ -12,9 +12,9 @@ class AppConfig:
         base_dir: Base directory of the application
         servers_file: Path to servers configuration (unified format)
         users_file: Path to users configuration
-        template_file: Path to V2Ray template
-        v2ray_template_file: Path to V2Ray JSON template
-        mihomo_template_file: Path to Mihomo YAML template
+        v2ray_profile_file: Path to V2Ray subscription base file
+        xray_profile_file: Path to Xray JSON base file
+        mihomo_profile_file: Path to Mihomo YAML base file
         happ_routing_file: Path to Happ routing configuration
         incy_routing_file: Path to Incy routing configuration
         cache_dir: Directory for caching data
@@ -24,9 +24,9 @@ class AppConfig:
     base_dir: Path
     servers_file: Path
     users_file: Path
-    template_file: Path
-    v2ray_template_file: Path
-    mihomo_template_file: Path
+    v2ray_profile_file: Path
+    xray_profile_file: Path
+    mihomo_profile_file: Path
     happ_routing_file: Path
     incy_routing_file: Path
     cache_dir: Path
@@ -53,20 +53,29 @@ class AppConfig:
         if base_dir is None:
             base_dir = env_config.base_dir
 
-        # Template files
-        templates_dir = base_dir / "templates"
-        v2ray_template = templates_dir / "v2ray-template.json"
-        mihomo_template = templates_dir / "mihomo-template.yaml"
-
         config = cls(
             base_dir=base_dir,
             servers_file=env_config.resolve_path("SERVERS_FILE", "servers", base_dir),
             users_file=env_config.resolve_path("USERS_FILE", "users", base_dir),
-            template_file=env_config.resolve_path(
-                "TEMPLATE_FILE", "templates/v2ray-url-template.txt", base_dir
+            v2ray_profile_file=env_config.resolve_profile_path(
+                "V2RAY_TEMPLATE_FILE",
+                "templates/v2ray.lst",
+                base_dir,
+                legacy_key="TEMPLATE_FILE",
+                legacy_default="templates/v2ray-url-template.txt",
             ),
-            v2ray_template_file=v2ray_template,
-            mihomo_template_file=mihomo_template,
+            xray_profile_file=env_config.resolve_profile_path(
+                "XRAY_TEMPLATE_FILE",
+                "templates/xray.json",
+                base_dir,
+                legacy_default="templates/v2ray-template.json",
+            ),
+            mihomo_profile_file=env_config.resolve_profile_path(
+                "MIHOMO_TEMPLATE_FILE",
+                "templates/mihomo.yaml",
+                base_dir,
+                legacy_default="templates/mihomo-template.yaml",
+            ),
             happ_routing_file=env_config.resolve_path("HAPP_ROUTING_FILE", "happ.routing", base_dir),
             incy_routing_file=env_config.resolve_path("INCY_ROUTING_FILE", "incy.routing", base_dir),
             cache_dir=env_config.resolve_path("SUBSTUB_CACHE_DIR", "/var/cache/sub-stub", base_dir),
@@ -87,9 +96,9 @@ class AppConfig:
         required_files = [
             (self.servers_file, "servers configuration"),
             (self.users_file, "users configuration"),
-            (self.template_file, "V2Ray URL template"),
-            (self.v2ray_template_file, "V2Ray JSON template"),
-            (self.mihomo_template_file, "Mihomo YAML template"),
+            (self.v2ray_profile_file, "V2Ray subscription base file"),
+            (self.xray_profile_file, "Xray JSON base file"),
+            (self.mihomo_profile_file, "Mihomo YAML base file"),
         ]
 
         missing = []

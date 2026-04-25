@@ -9,9 +9,14 @@ User=sub-stub
 Group=sub-stub
 CacheDirectory=sub-stub
 CacheDirectoryMode=0750
+Environment="SUBSTUB_CACHE_DIR=/var/cache/sub-stub"
 RuntimeDirectory=sub-stub
 WorkingDirectory=/opt/sub-stub
 ExecStart=/opt/sub-stub/.venv/bin/python3 /opt/sub-stub/app.py
+Environment="PYTHONUNBUFFERED=1"
+Environment="SOCK=/run/sub-stub/sub.stub.sock"
+Environment="LOG_LEVEL=INFO"
+Environment="LOG_FORMAT=%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 Restart=on-failure
 ExecStartPre=/opt/sub-stub/scripts/prestart-pip-upgrade.sh
 

@@ -49,9 +49,9 @@ def sample_servers_file(temp_dir: Path) -> Path:
 
 
 @pytest.fixture
-def sample_v2ray_template(temp_dir: Path) -> Path:
-    """Create sample V2Ray template file."""
-    template_file = temp_dir / "v2ray-template.txt"
+def sample_v2ray_profile(temp_dir: Path) -> Path:
+    """Create sample V2Ray subscription base file."""
+    template_file = temp_dir / "v2ray.lst"
     template_file.write_text(
         "vless://<ID>@<ADDRESS>:443?encryption=none&flow=xtls-rprx-vision&"
         "security=reality&sni=<SERVERNAME>&fp=chrome&pbk=<PBK>&"
@@ -62,9 +62,9 @@ def sample_v2ray_template(temp_dir: Path) -> Path:
 
 
 @pytest.fixture
-def sample_mihomo_template(temp_dir: Path) -> Path:
-    """Create sample Mihomo template file."""
-    template_file = temp_dir / "mihomo-template.yaml"
+def sample_mihomo_profile(temp_dir: Path) -> Path:
+    """Create sample Mihomo base file."""
+    template_file = temp_dir / "mihomo.yaml"
     template_file.write_text(
         """proxy-template:
   type: vless
@@ -93,9 +93,9 @@ rules:
 
 
 @pytest.fixture
-def sample_v2ray_json_template(temp_dir: Path) -> Path:
-    """Create sample V2Ray JSON template file."""
-    template_file = temp_dir / "v2ray-template.json"
+def sample_xray_profile(temp_dir: Path) -> Path:
+    """Create sample Xray JSON base file."""
+    template_file = temp_dir / "xray.json"
     template_file.write_text(
         """{
   "log": {"loglevel": "warning"},
@@ -121,9 +121,9 @@ def app_config(
     temp_dir: Path,
     sample_users_file: Path,
     sample_servers_file: Path,
-    sample_v2ray_template: Path,
-    sample_mihomo_template: Path,
-    sample_v2ray_json_template: Path,
+    sample_v2ray_profile: Path,
+    sample_mihomo_profile: Path,
+    sample_xray_profile: Path,
 ) -> AppConfig:
     """Create AppConfig for testing."""
     happ_routing = temp_dir / "happ.routing"
@@ -135,9 +135,9 @@ def app_config(
         cache_dir=temp_dir / "cache",
         servers_file=sample_servers_file,
         users_file=sample_users_file,
-        template_file=sample_v2ray_template,
-        v2ray_template_file=sample_v2ray_json_template,
-        mihomo_template_file=sample_mihomo_template,
+        v2ray_profile_file=sample_v2ray_profile,
+        xray_profile_file=sample_xray_profile,
+        mihomo_profile_file=sample_mihomo_profile,
         happ_routing_file=happ_routing,
         incy_routing_file=incy_routing,
         geo_cache_ttl=3600,

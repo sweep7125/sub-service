@@ -25,9 +25,9 @@ class ConfigService:
         self.repos = ConfigRepository(
             servers_path=config.servers_file,
             users_path=config.users_file,
-            template_path=config.template_file,
-            v2ray_template_path=config.v2ray_template_file,
-            mihomo_template_path=config.mihomo_template_file,
+            v2ray_profile_path=config.v2ray_profile_file,
+            xray_profile_path=config.xray_profile_file,
+            mihomo_profile_path=config.mihomo_profile_file,
         )
 
         # Initialize spider-x generator
@@ -37,12 +37,12 @@ class ConfigService:
         self.mihomo_builder = MihomoBuilder(template_loader=self.repos.get_mihomo_template)
 
         self.v2ray_builder = V2RayBuilder(
-            template_loader=self.repos.template.get,
+            template_loader=self.repos.get_v2ray_template,
             spiderx_generator=self.spiderx_gen,
         )
 
         self.legacy_builder = LegacyJsonBuilder(
-            json_loader=self.repos.v2ray_template.get,
+            json_loader=self.repos.get_xray_template,
             spiderx_generator=self.spiderx_gen,
         )
 
@@ -65,40 +65,51 @@ class ConfigService:
         """
         return self.repos.users.find_by_prefix(prefix)
 
-    def build_mihomo_config(self, servers: list[Server], user: UserInfo) -> bytes:
+    def build_mihomo_config(
+        self, servers: list[Server], user: UserInfo, user_agent: str = ""
+    ) -> bytes:
         """Build Mihomo/Clash configuration.
 
         Args:
             servers: Available servers
             user: User credentials
+            user_agent: Request User-Agent for keyword profile selection
 
         Returns:
             YAML configuration
         """
         # Use custom template if user has mihomo_advanced field set
         template_name = user.mihomo_advanced
-        return self.mihomo_builder.build(servers, user, template_name=template_name)
+        return self.mihomo_builder.build(
+            servers, user, template_name=template_name, user_agent=user_agent
+        )
 
-    def build_v2ray_config(self, servers: list[Server], user: UserInfo) -> bytes:
+    def build_v2ray_config(
+        self, servers: list[Server], user: UserInfo, user_agent: str = ""
+    ) -> bytes:
         """Build V2Ray subscription.
 
         Args:
             servers: Available servers
             user: User credentials
+            user_agent: Request User-Agent for keyword profile selection
 
         Returns:
             V2Ray subscription links
         """
-        return self.v2ray_builder.build(servers, user)
+        return self.v2ray_builder.build(servers, user, user_agent=user_agent)
 
-    def build_legacy_config(self, servers: list[Server], user: UserInfo) -> bytes:
+    def build_legacy_config(
+        self, servers: list[Server], user: UserInfo, user_agent: str = ""
+    ) -> bytes:
         """Build legacy JSON configuration.
 
         Args:
             servers: Available servers
             user: User credentials
+            user_agent: Request User-Agent for keyword profile selection
 
         Returns:
             JSON configuration
         """
-        return self.legacy_builder.build(servers, user)
+        return self.legacy_builder.build(servers, user, user_agent=user_agent)

@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from src.repositories import ServerRepository, UserRepository
+from src.repositories import ConfigRepository, ServerRepository, UserRepository
 
 
 class TestUserRepository:
@@ -260,6 +260,122 @@ class TestServerRepository:
         servers = repo.get()
 
         assert len(servers) == 0
+
+
+class TestConfigRepository:
+    """Tests for profile selection repository logic."""
+
+    def test_selects_v2ray_profile_by_user_agent(
+        self,
+        sample_servers_file: Path,
+        sample_users_file: Path,
+        sample_v2ray_profile: Path,
+        sample_xray_profile: Path,
+        sample_mihomo_profile: Path,
+    ):
+        """V2Ray keyword profile should override base file."""
+        variant = sample_v2ray_profile.parent / "v2ray_android.lst"
+        variant.write_text("android-template", encoding="utf-8")
+
+        repo = ConfigRepository(
+            servers_path=sample_servers_file,
+            users_path=sample_users_file,
+            v2ray_profile_path=sample_v2ray_profile,
+            xray_profile_path=sample_xray_profile,
+            mihomo_profile_path=sample_mihomo_profile,
+        )
+
+        assert repo.get_v2ray_template("Mozilla Android") == "android-template"
+
+    def test_matches_any_keyword_from_profile_name(
+        self,
+        sample_servers_file: Path,
+        sample_users_file: Path,
+        sample_v2ray_profile: Path,
+        sample_xray_profile: Path,
+        sample_mihomo_profile: Path,
+    ):
+        """Multiple underscore suffixes should match by OR."""
+        variant = sample_mihomo_profile.parent / "mihomo_clash_meta.yaml"
+        variant.write_text(
+            """profile: meta
+proxy-template:
+  type: vless
+""",
+            encoding="utf-8",
+        )
+
+        repo = ConfigRepository(
+            servers_path=sample_servers_file,
+            users_path=sample_users_file,
+            v2ray_profile_path=sample_v2ray_profile,
+            xray_profile_path=sample_xray_profile,
+            mihomo_profile_path=sample_mihomo_profile,
+        )
+
+        template = repo.get_mihomo_template(user_agent="ClashMeta/1.0")
+        assert template["profile"] == "meta"
+
+    def test_custom_mihomo_profile_overrides_user_agent_match(
+        self,
+        sample_servers_file: Path,
+        sample_users_file: Path,
+        sample_v2ray_profile: Path,
+        sample_xray_profile: Path,
+        sample_mihomo_profile: Path,
+    ):
+        """Explicit Mihomo filename should win over UA keyword match."""
+        ua_variant = sample_mihomo_profile.parent / "mihomo_android.yaml"
+        ua_variant.write_text(
+            """profile: android
+proxy-template:
+  type: vless
+""",
+            encoding="utf-8",
+        )
+        explicit_variant = sample_mihomo_profile.parent / "vip-template.yaml"
+        explicit_variant.write_text(
+            """profile: explicit
+proxy-template:
+  type: vless
+""",
+            encoding="utf-8",
+        )
+
+        repo = ConfigRepository(
+            servers_path=sample_servers_file,
+            users_path=sample_users_file,
+            v2ray_profile_path=sample_v2ray_profile,
+            xray_profile_path=sample_xray_profile,
+            mihomo_profile_path=sample_mihomo_profile,
+        )
+
+        template = repo.get_mihomo_template("vip-template.yaml", user_agent="android")
+        assert template["profile"] == "explicit"
+
+    def test_prefers_longer_overlapping_keyword_match(
+        self,
+        sample_servers_file: Path,
+        sample_users_file: Path,
+        sample_v2ray_profile: Path,
+        sample_xray_profile: Path,
+        sample_mihomo_profile: Path,
+    ):
+        """Longer keyword should win when overlap starts at same UA position."""
+        short_variant = sample_v2ray_profile.parent / "v2ray_cmf.lst"
+        short_variant.write_text("cmf", encoding="utf-8")
+        long_variant = sample_v2ray_profile.parent / "v2ray_cmfa.lst"
+        long_variant.write_text("cmfa", encoding="utf-8")
+
+        repo = ConfigRepository(
+            servers_path=sample_servers_file,
+            users_path=sample_users_file,
+            v2ray_profile_path=sample_v2ray_profile,
+            xray_profile_path=sample_xray_profile,
+            mihomo_profile_path=sample_mihomo_profile,
+        )
+
+        assert repo.get_v2ray_template("cmfa/android") == "cmfa"
 
     def test_default_internal_type(self, temp_dir: Path):
         """Test that servers default to internal type."""

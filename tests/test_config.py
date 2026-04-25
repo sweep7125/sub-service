@@ -44,9 +44,9 @@ class TestAppConfig:
 
         (override_base / "servers").write_text("", encoding="utf-8")
         (override_base / "users").write_text("", encoding="utf-8")
-        (templates_dir / "v2ray-url-template.txt").write_text("template", encoding="utf-8")
-        (templates_dir / "v2ray-template.json").write_text("[]", encoding="utf-8")
-        (templates_dir / "mihomo-template.yaml").write_text("{}", encoding="utf-8")
+        (templates_dir / "v2ray.lst").write_text("template", encoding="utf-8")
+        (templates_dir / "xray.json").write_text("[]", encoding="utf-8")
+        (templates_dir / "mihomo.yaml").write_text("{}", encoding="utf-8")
         (override_base / "happ.routing").write_text("{}", encoding="utf-8")
         (override_base / "incy.routing").write_text("{}", encoding="utf-8")
 
@@ -57,7 +57,9 @@ class TestAppConfig:
         monkeypatch.setenv("BASE_DIR", str(other_base))
         monkeypatch.setenv("SERVERS_FILE", "servers")
         monkeypatch.setenv("USERS_FILE", "users")
-        monkeypatch.setenv("TEMPLATE_FILE", "templates/v2ray-url-template.txt")
+        monkeypatch.setenv("V2RAY_TEMPLATE_FILE", "templates/v2ray.lst")
+        monkeypatch.setenv("XRAY_TEMPLATE_FILE", "templates/xray.json")
+        monkeypatch.setenv("MIHOMO_TEMPLATE_FILE", "templates/mihomo.yaml")
         monkeypatch.setenv("HAPP_ROUTING_FILE", "happ.routing")
         monkeypatch.delenv("INCY_ROUTING_FILE", raising=False)
 
@@ -68,6 +70,36 @@ class TestAppConfig:
         assert config.base_dir == override_base
         assert config.servers_file == override_base / "servers"
         assert config.users_file == override_base / "users"
-        assert config.template_file == override_base / "templates" / "v2ray-url-template.txt"
+        assert config.v2ray_profile_file == override_base / "templates" / "v2ray.lst"
+        assert config.xray_profile_file == override_base / "templates" / "xray.json"
+        assert config.mihomo_profile_file == override_base / "templates" / "mihomo.yaml"
         assert config.happ_routing_file == override_base / "happ.routing"
         assert config.incy_routing_file == override_base / "incy.routing"
+
+    def test_from_environment_falls_back_to_legacy_template_names(self, monkeypatch, temp_dir: Path):
+        """Legacy template filenames should still work during migration."""
+        override_base = temp_dir / "override"
+        templates_dir = override_base / "templates"
+        templates_dir.mkdir(parents=True)
+
+        (override_base / "servers").write_text("", encoding="utf-8")
+        (override_base / "users").write_text("", encoding="utf-8")
+        (templates_dir / "v2ray-url-template.txt").write_text("template", encoding="utf-8")
+        (templates_dir / "v2ray-template.json").write_text("[]", encoding="utf-8")
+        (templates_dir / "mihomo-template.yaml").write_text("{}", encoding="utf-8")
+        (override_base / "happ.routing").write_text("{}", encoding="utf-8")
+        (override_base / "incy.routing").write_text("{}", encoding="utf-8")
+
+        monkeypatch.setenv("SECRET_PATH", "secret")
+        monkeypatch.delenv("V2RAY_TEMPLATE_FILE", raising=False)
+        monkeypatch.delenv("XRAY_TEMPLATE_FILE", raising=False)
+        monkeypatch.delenv("MIHOMO_TEMPLATE_FILE", raising=False)
+        monkeypatch.delenv("TEMPLATE_FILE", raising=False)
+
+        from src.models import AppConfig
+
+        config = AppConfig.from_environment(base_dir=override_base)
+
+        assert config.v2ray_profile_file == override_base / "templates" / "v2ray-url-template.txt"
+        assert config.xray_profile_file == override_base / "templates" / "v2ray-template.json"
+        assert config.mihomo_profile_file == override_base / "templates" / "mihomo-template.yaml"

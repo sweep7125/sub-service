@@ -24,13 +24,13 @@ class LegacyJsonBuilder(BaseConfigBuilder):
 
     def __init__(
         self,
-        json_loader: Callable[[], list[dict]],
+        json_loader: Callable[[str], list[dict]],
         spiderx_generator: SpiderXGenerator | None = None,
     ) -> None:
         """Initialize legacy JSON builder.
 
         Args:
-            json_loader: Function to load JSON template blocks
+            json_loader: Function to load JSON template blocks by User-Agent
             spiderx_generator: Generator for spider-x paths
         """
         self.json_loader = json_loader
@@ -40,17 +40,19 @@ class LegacyJsonBuilder(BaseConfigBuilder):
         self,
         servers: list[Server],
         user: UserInfo,
+        user_agent: str = "",
     ) -> bytes:
         """Build legacy JSON configuration.
 
         Args:
             servers: List of available servers
             user: User credentials
+            user_agent: Request User-Agent for keyword profile selection
 
         Returns:
             JSON array of configuration blocks as bytes
         """
-        base_blocks = self.json_loader() or []
+        base_blocks = self.json_loader(user_agent) or []
         if not isinstance(base_blocks, list):
             logger.warning(f"Invalid JSON template type: {type(base_blocks)}, expected list")
             base_blocks = []

@@ -21,12 +21,14 @@ class MihomoBuilder(BaseConfigBuilder):
     generates YAML configuration files compatible with Mihomo clients.
     """
 
-    def __init__(self, template_loader: Callable[[str | None], JsonDict] | None = None) -> None:
+    def __init__(
+        self, template_loader: Callable[[str | None, str], JsonDict] | None = None
+    ) -> None:
         """Initialize Mihomo builder.
 
         Args:
             template_loader: Function to load YAML template.
-                           Takes optional template_name parameter.
+                           Takes optional template_name and user_agent parameters.
         """
         self.template_loader = template_loader
 
@@ -35,6 +37,7 @@ class MihomoBuilder(BaseConfigBuilder):
         servers: list[Server],
         user: UserInfo,
         template_name: str | None = None,
+        user_agent: str = "",
     ) -> bytes:
         """Build Mihomo YAML configuration.
 
@@ -42,12 +45,13 @@ class MihomoBuilder(BaseConfigBuilder):
             servers: List of available servers
             user: User credentials
             template_name: Optional custom template filename
+            user_agent: Request User-Agent for keyword profile selection
 
         Returns:
             YAML configuration as bytes
         """
         # Load template
-        template = self.template_loader(template_name) if self.template_loader else {}
+        template = self.template_loader(template_name, user_agent) if self.template_loader else {}
 
         if not isinstance(template, dict):
             logger.error(f"Invalid Mihomo template type: {type(template)}, expected dict")

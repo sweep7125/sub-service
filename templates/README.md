@@ -7,10 +7,10 @@
 #
 # ============================================================================
 
-## Доступные шаблоны:
+## Доступные профили:
 
-### 1. v2ray-template.json
-**Тип:** V2Ray/Xray configuration (JSON)
+### 1. xray.json
+**Тип:** Xray configuration (JSON)
 **Клиенты:** V2RayN, V2RayNG, Xray
 **Платформы:** Windows, Android, iOS (с соотв. клиентами)
 
@@ -59,7 +59,7 @@
 Пример плоского формата: `examples/v2ray-flat-settings-example.json`
 
 
-### 2. mihomo-template.yaml
+### 2. mihomo.yaml
 **Тип:** Mihomo/Clash configuration (YAML)
 **Клиенты:** Clash, Clash Meta, Mihomo
 **Платформы:** Windows, macOS, Linux, Android, iOS
@@ -75,7 +75,7 @@
 - Поля в шаблоне (name, server, uuid, servername, public-key, short-id) заполняются автоматически
 
 
-### 3. clear-config (в корне проекта)
+### 3. v2ray.lst
 **Тип:** Universal VLESS link template
 **Формат:** vless:// URL scheme
 
@@ -91,9 +91,35 @@
 - `<NAME>` - имя подключения
 
 
-## Как добавить новый шаблон:
+## Кейворд-профили по User-Agent
 
-1. Создайте файл с расширением `.json`, `.yaml` или `.txt`
+Базовые файлы:
+
+- `mihomo.yaml`
+- `xray.json`
+- `v2ray.lst`
+
+Опциональные варианты лежат рядом с базой и используют суффикс после `_`:
+
+- `mihomo_android.yaml`
+- `mihomo_clash_meta.yaml`
+- `xray_cmfa_android.json`
+- `v2ray_clashmeta.lst`
+
+Правила:
+
+1. Сервис берет базовый файл для нужного формата.
+2. Если есть вариант с кейвордом, и этот кейворд встречается в `User-Agent`, берется вариант.
+3. Сопоставление без учета регистра.
+4. Несколько `_` после базового имени означают OR-сопоставление по всем частям.
+5. Если совпадений нет, остается базовый файл.
+
+## Как добавить новый профиль:
+
+1. Создайте базовый файл или variant рядом с ним:
+   - `mihomo.yaml`, `mihomo_android.yaml`
+   - `xray.json`, `xray_cmfa_android.json`
+   - `v2ray.lst`, `v2ray_clashmeta.lst`
 2. Используйте плейсхолдеры для динамических значений:
    - `{USER_UUID}` - UUID пользователя
    - `{USER_SHORT_ID}` - Short ID пользователя
@@ -112,9 +138,10 @@
 ```
 templates/
 ├── README.md                 # Этот файл
-├── v2ray-template.json       # Шаблон V2Ray конфигов
-├── mihomo-template.yaml      # Шаблон Mihomo конфигов
-└── [ваш-шаблон]             # Пользовательские шаблоны
+├── xray.json                 # База Xray JSON
+├── mihomo.yaml               # База Mihomo YAML
+├── v2ray.lst                 # База VLESS ссылок
+└── [keyword-variant]         # Вариант по User-Agent
 
 src/
 ├── models/                   # Модели данных (User, Server)

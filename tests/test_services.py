@@ -67,6 +67,32 @@ class TestConfigService:
         config_str = result.decode("utf-8")
         assert "proxies:" in config_str
 
+    def test_build_mihomo_config_uses_user_agent_profile(self, app_config: AppConfig):
+        """Matching Mihomo keyword profile should override base file."""
+        variant = app_config.mihomo_profile_file.parent / "mihomo_cmfa.yaml"
+        variant.write_text(
+            """profile: cmfa
+proxy-template:
+  type: vless
+  servername: example.com
+  reality-opts:
+    public-key: ""
+    short-id: ""
+""",
+            encoding="utf-8",
+        )
+
+        service = ConfigService(app_config)
+        servers = service.get_servers()
+        user = service.find_user("user1")
+
+        assert user is not None
+
+        eligible = [s for s in servers if not s.groups or user.has_access_to_groups(s.groups)]
+        result = service.build_mihomo_config(eligible, user, user_agent="cmfa/android")
+
+        assert "profile: cmfa" in result.decode("utf-8")
+
     def test_build_v2ray_config(self, app_config: AppConfig):
         """Test building V2Ray subscription."""
         service = ConfigService(app_config)
@@ -86,6 +112,25 @@ class TestConfigService:
         links = result.decode("utf-8")
         assert "vless://" in links
 
+    def test_build_v2ray_config_uses_user_agent_profile(self, app_config: AppConfig):
+        """Matching V2Ray keyword profile should override base file."""
+        variant = app_config.v2ray_profile_file.parent / "v2ray_android.lst"
+        variant.write_text(
+            "vless://<ID>@<ADDRESS>:443?type=tcp#android-<NAME>",
+            encoding="utf-8",
+        )
+
+        service = ConfigService(app_config)
+        servers = service.get_servers()
+        user = service.find_user("user1")
+
+        assert user is not None
+
+        eligible = [s for s in servers if not s.groups or user.has_access_to_groups(s.groups)]
+        result = service.build_v2ray_config(eligible, user, user_agent="Some Android Client")
+
+        assert "#android-" in result.decode("utf-8")
+
     def test_build_legacy_config(self, app_config: AppConfig):
         """Test building legacy JSON configuration."""
         service = ConfigService(app_config)
@@ -101,6 +146,40 @@ class TestConfigService:
 
         assert isinstance(result, bytes)
         assert len(result) > 0
+
+    def test_build_legacy_config_uses_user_agent_profile(self, app_config: AppConfig):
+        """Matching Xray keyword profile should override base file."""
+        variant = app_config.xray_profile_file.parent / "xray_android.json"
+        variant.write_text(
+            """[
+  {
+    "remarks": "android",
+    "outbounds": [
+      {
+        "protocol": "vless",
+        "settings": {
+          "address": null,
+          "port": 443,
+          "id": null,
+          "encryption": "none"
+        }
+      }
+    ]
+  }
+]""",
+            encoding="utf-8",
+        )
+
+        service = ConfigService(app_config)
+        servers = service.get_servers()
+        user = service.find_user("user1")
+
+        assert user is not None
+
+        eligible = [s for s in servers if not s.groups or user.has_access_to_groups(s.groups)]
+        result = service.build_legacy_config(eligible, user, user_agent="ANDROID/14")
+
+        assert " | android" in result.decode("utf-8")
 
 
 class TestGeoFileService:
