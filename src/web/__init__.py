@@ -9,7 +9,7 @@ from typing import Any, Final
 
 from flask import Flask, Request, Response, abort, g, redirect, request
 
-from ..config import env_config
+from .. import config as config_module
 from ..constants import (
     MIME_TYPE_JSON,
     MIME_TYPE_TEXT,
@@ -68,12 +68,23 @@ _FORMAT_TYPES: Final[dict[str, str]] = {
 
 def _is_allowed_subscription_user_agent(user_agent: str) -> bool:
     """Validate whether the subscription can be served for this User-Agent."""
+    return _matches_subscription_user_agent_policy(
+        user_agent,
+        config_module.env_config.subscription_user_agent_whitelist_pattern,
+        config_module.env_config.subscription_user_agent_blocklist_pattern,
+    )
+
+
+def _matches_subscription_user_agent_policy(
+    user_agent: str,
+    whitelist_pattern: re.Pattern[str] | None,
+    blocklist_pattern: re.Pattern[str] | None,
+) -> bool:
+    """Validate whether the subscription can be served for this User-Agent."""
     normalized_ua = user_agent.strip()
-    whitelist_pattern = env_config.subscription_user_agent_whitelist_pattern
     if whitelist_pattern and not whitelist_pattern.search(normalized_ua):
         return False
 
-    blocklist_pattern = env_config.subscription_user_agent_blocklist_pattern
     return not (blocklist_pattern and blocklist_pattern.search(normalized_ua))
 
 
@@ -91,10 +102,17 @@ class WebApplication:
         self.geo_service = GeoFileService(
             cache_dir=config.cache_dir, cache_ttl=config.geo_cache_ttl
         )
+        self._subscription_user_agent_whitelist_pattern = (
+            config_module.env_config.subscription_user_agent_whitelist_pattern
+        )
+        self._subscription_user_agent_blocklist_pattern = (
+            config_module.env_config.subscription_user_agent_blocklist_pattern
+        )
+        self._custom_headers = config_module.env_config.custom_headers
 
         # Initialize Flask app
         self.app = Flask(__name__)
-        self.app.config["JSON_SORT_KEYS"] = env_config.flask_json_sort_keys
+        self.app.config["JSON_SORT_KEYS"] = config_module.env_config.flask_json_sort_keys
 
         # Register middleware
         self._register_middleware()
@@ -158,7 +176,7 @@ class WebApplication:
     def _register_routes(self) -> None:
         """Register all application routes."""
         # Get secret path from environment
-        secret_path = env_config.secret_path
+        secret_path = config_module.env_config.secret_path
 
         # Main entry point
         self.app.route(f"/{secret_path}/", defaults={"user_path": ""})(self.handle_request)
@@ -183,7 +201,11 @@ class WebApplication:
         client_ip = getattr(g, "client_ip", "unknown")
         user_agent = request.headers.get("User-Agent", "N/A")
 
-        if not _is_allowed_subscription_user_agent(user_agent):
+        if not _matches_subscription_user_agent_policy(
+            user_agent,
+            self._subscription_user_agent_whitelist_pattern,
+            self._subscription_user_agent_blocklist_pattern,
+        ):
             logger.warning(f"Blocked by User-Agent policy - IP: {client_ip} - UA: {user_agent}")
             abort(403)
 
@@ -346,7 +368,7 @@ class WebApplication:
         user_agent = request.headers.get("User-Agent", "")
 
         # Apply custom headers from environment configuration
-        for header_config in env_config.custom_headers:
+        for header_config in self._custom_headers:
             header_name = header_config["name"]
             header_value = header_config["value"]
             user_agent_re = header_config.get("user_agent_re")

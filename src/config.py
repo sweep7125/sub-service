@@ -3,6 +3,7 @@
 import logging
 import os
 import re
+from functools import cached_property
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -301,7 +302,7 @@ class EnvConfig:
         return self.get_int("WORKER_THREADS", 1)
 
     # User-Agent policy settings
-    @property
+    @cached_property
     def subscription_user_agent_whitelist_pattern(self) -> re.Pattern[str] | None:
         """Get whitelist regex for subscription access User-Agent policy.
 
@@ -318,7 +319,7 @@ class EnvConfig:
             re.IGNORECASE,
         )
 
-    @property
+    @cached_property
     def subscription_user_agent_blocklist_pattern(self) -> re.Pattern[str] | None:
         """Get blocklist regex for subscription access User-Agent policy.
 
@@ -328,7 +329,7 @@ class EnvConfig:
             "SUBSCRIPTION_UA_BLOCKLIST_PATTERN", r"YaBrowser|Yowser", re.IGNORECASE
         )
 
-    @property
+    @cached_property
     def custom_headers(self) -> list[dict[str, str]]:
         """Get custom headers configuration.
 

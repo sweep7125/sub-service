@@ -30,9 +30,6 @@ DNS_PLACEHOLDERS: Final[frozenset[str]] = frozenset(
 # Geo files URLs for automatic updates (from environment)
 GEO_FILES_URLS: Final[list[str]] = env_config.geo_files_urls
 
-# Custom HTTP headers configuration (from environment)
-CUSTOM_HEADERS: Final[list[dict[str, str]]] = env_config.custom_headers
-
 # Spider-X generation parameters (from environment)
 SPIDERX_MIN_LENGTH: Final[int] = env_config.spiderx_min_length
 SPIDERX_MAX_LENGTH: Final[int] = env_config.spiderx_max_length
