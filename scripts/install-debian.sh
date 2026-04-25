@@ -61,15 +61,62 @@ resolve_mode() {
   esac
 }
 
+have_command() {
+  command -v "$1" >/dev/null 2>&1
+}
+
+append_missing_package() {
+  local package="$1"
+  local existing
+
+  for existing in "${missing_packages[@]:-}"; do
+    if [ "$existing" = "$package" ]; then
+      return
+    fi
+  done
+
+  missing_packages+=("$package")
+}
+
+detect_missing_packages() {
+  local -a missing_packages=()
+
+  have_command python3 || append_missing_package python3
+  have_command rsync || append_missing_package rsync
+
+  if have_command python3; then
+    python3 -c 'import venv' >/dev/null 2>&1 || append_missing_package python3-venv
+  else
+    append_missing_package python3-venv
+  fi
+
+  [ -e /etc/ssl/certs/ca-certificates.crt ] || append_missing_package ca-certificates
+
+  printf '%s\n' "${missing_packages[@]}"
+}
+
 install_packages() {
+  local package
+  local -a filtered_packages=()
+  mapfile -t missing_packages < <(detect_missing_packages)
+
+  for package in "${missing_packages[@]}"; do
+    if [ -n "$package" ]; then
+      filtered_packages+=("$package")
+    fi
+  done
+
+  missing_packages=("${filtered_packages[@]}")
+
+  if [ "${#missing_packages[@]}" -eq 0 ]; then
+    log "system packages already present"
+    return
+  fi
+
+  log "installing missing packages: ${missing_packages[*]}"
   export DEBIAN_FRONTEND=noninteractive
   apt-get update
-  apt-get install -y --no-install-recommends \
-    ca-certificates \
-    python3 \
-    python3-pip \
-    python3-venv \
-    rsync
+  apt-get install -y --no-install-recommends "${missing_packages[@]}"
 }
 
 ensure_user() {
@@ -180,6 +227,24 @@ ensure_venv() {
   runuser -u "$APP_USER" -- "${VENV_DIR}/bin/python3" -m pip install -r "${INSTALL_DIR}/requirements.txt"
 }
 
+validate_env_file() {
+  local env_file="${INSTALL_DIR}/.env"
+
+  if [ ! -f "$env_file" ]; then
+    log "warn: ${env_file} missing; create it before service start"
+    return
+  fi
+
+  if ! grep -Eq '^[[:space:]]*SECRET_PATH=' "$env_file"; then
+    log "warn: SECRET_PATH missing in ${env_file}"
+    return
+  fi
+
+  if grep -Eq '^[[:space:]]*SECRET_PATH=your_secret_path_here_change_this[[:space:]]*$' "$env_file"; then
+    log "warn: SECRET_PATH still uses placeholder in ${env_file}"
+  fi
+}
+
 install_unit_if_missing() {
   if [ -e "$SYSTEMD_UNIT" ]; then
     log "unit exists, keep local version: $SYSTEMD_UNIT"
@@ -241,6 +306,7 @@ main() {
   fi
 
   ensure_venv
+  validate_env_file
   start_or_restart_service
 
   if [ "$MODE" = "install" ]; then

@@ -81,6 +81,14 @@ sudo ./scripts/install-debian.sh update  # code-only update
 
 Default target: `/opt/sub-stub`.
 
+Usage notes:
+
+- run from repo root as `root` or via `sudo`
+- `auto` picks `install` when `/opt/sub-stub/app.py` is missing, else `update`
+- installer checks missing system packages and installs them with `apt`
+- on first install it creates `/opt/sub-stub/.env` from `.env.example`
+- if `.env` has no `SECRET_PATH` or still has placeholder, installer prints warning
+
 Install mode copies runtime files, `servers`, `users`, `.env.example`, `.env`, templates, and installs default systemd unit.
 
 Update mode refreshes only runtime code:
