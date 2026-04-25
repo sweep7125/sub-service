@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-APP_NAME="sub-stub"
-APP_USER="sub-stub"
-APP_GROUP="sub-stub"
+APP_NAME="${APP_NAME:-sub-stub}"
+APP_USER="${APP_USER:-sub-stub}"
+APP_GROUP="${APP_GROUP:-sub-stub}"
 INSTALL_DIR="${INSTALL_DIR:-/opt/sub-stub}"
 SYSTEMD_UNIT="${SYSTEMD_UNIT:-/etc/systemd/system/sub-stub.service}"
 MODE="${1:-auto}"
