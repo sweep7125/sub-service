@@ -4,13 +4,13 @@ import json
 import logging
 import re
 import time
-from typing import Final
+from pathlib import Path
+from typing import Any, Final
 
 from flask import Flask, Request, Response, abort, g, redirect, request
 
 from ..config import env_config
 from ..constants import (
-    CUSTOM_HEADERS,
     MIME_TYPE_JSON,
     MIME_TYPE_TEXT,
     MIME_TYPE_YAML,
@@ -56,29 +56,25 @@ _HAPP_USER_AGENT_PATTERN: Final[re.Pattern[str]] = re.compile(
 # Incy client user agent pattern for routing header compatibility
 _INCY_USER_AGENT_PATTERN: Final[re.Pattern[str]] = re.compile(r"^Incy/\d+\.\d+\.\d+", re.IGNORECASE)
 
-# Subscription access policy patterns
-_SUBSCRIPTION_UA_WHITELIST_PATTERN: Final[re.Pattern[str] | None] = (
-    env_config.subscription_user_agent_whitelist_pattern
-)
-_SUBSCRIPTION_UA_BLOCKLIST_PATTERN: Final[re.Pattern[str] | None] = (
-    env_config.subscription_user_agent_blocklist_pattern
-)
+_FORMAT_TYPES: Final[dict[str, str]] = {
+    "json": "json",
+    "v2ray": "v2ray",
+    "mihomo": "mihomo",
+    "clash": "mihomo",
+    "mh": "mihomo",
+    "type3": "mihomo",
+}
 
 
 def _is_allowed_subscription_user_agent(user_agent: str) -> bool:
     """Validate whether the subscription can be served for this User-Agent."""
     normalized_ua = user_agent.strip()
-    if _SUBSCRIPTION_UA_WHITELIST_PATTERN and not _SUBSCRIPTION_UA_WHITELIST_PATTERN.search(
-        normalized_ua
-    ):
+    whitelist_pattern = env_config.subscription_user_agent_whitelist_pattern
+    if whitelist_pattern and not whitelist_pattern.search(normalized_ua):
         return False
 
-    if _SUBSCRIPTION_UA_BLOCKLIST_PATTERN and _SUBSCRIPTION_UA_BLOCKLIST_PATTERN.search(
-        normalized_ua
-    ):
-        return False
-
-    return True
+    blocklist_pattern = env_config.subscription_user_agent_blocklist_pattern
+    return not (blocklist_pattern and blocklist_pattern.search(normalized_ua))
 
 
 class WebApplication:
@@ -107,10 +103,10 @@ class WebApplication:
         self._register_routes()
 
         # Load Happ routing config
-        self._happ_routing_config = self._load_happ_routing()
+        self._happ_routing_config = self._load_routing_config(config.happ_routing_file, "Happ")
 
         # Load Incy routing config
-        self._incy_routing_config = self._load_incy_routing()
+        self._incy_routing_config = self._load_routing_config(config.incy_routing_file, "Incy")
 
     def _register_middleware(self) -> None:
         """Register Flask middleware for logging."""
@@ -216,12 +212,9 @@ class WebApplication:
         try:
             if format_type == "v2ray":
                 return self._build_v2ray_response(servers, user)
-
-            elif format_type == "mihomo":
+            if format_type == "mihomo":
                 return self._build_mihomo_response(servers, user)
-
-            else:  # json or default
-                return self._build_json_response(servers, user)
+            return self._build_json_response(servers, user)
 
         except ValueError as e:
             # User has no access to any servers
@@ -286,15 +279,11 @@ class WebApplication:
 
         # Determine format type
         format_type = "json"  # default
-        if len(segments) > 1:
-            format_segment = segments[1].lower()
-
-            if format_segment == "v2ray":
-                format_type = "v2ray"
-            elif format_segment in ("clash", "mh", "type3"):
-                format_type = "mihomo"
-            elif format_segment == "json":
-                format_type = "json"
+        for format_segment in reversed(segments[1:]):
+            mapped_format = _FORMAT_TYPES.get(format_segment.lower())
+            if mapped_format:
+                format_type = mapped_format
+                break
 
         return user, format_type
 
@@ -357,7 +346,7 @@ class WebApplication:
         user_agent = request.headers.get("User-Agent", "")
 
         # Apply custom headers from environment configuration
-        for header_config in CUSTOM_HEADERS:
+        for header_config in env_config.custom_headers:
             header_name = header_config["name"]
             header_value = header_config["value"]
             user_agent_re = header_config.get("user_agent_re")
@@ -386,44 +375,24 @@ class WebApplication:
 
         return response
 
-    def _load_happ_routing(self) -> dict:
-        """Load Happ routing configuration.
+    def _load_routing_config(self, path: Path, client_name: str) -> dict[str, Any]:
+        """Load routing configuration from JSON file.
 
         Returns:
             Routing configuration dictionary
         """
         try:
-            with self.config.happ_routing_file.open("r", encoding="utf-8") as f:
+            with path.open("r", encoding="utf-8") as f:
                 data = json.load(f)
                 return data if isinstance(data, dict) else {}
         except FileNotFoundError:
-            logger.info("Happ routing file not found, using empty configuration")
+            logger.info(f"{client_name} routing file not found, using empty configuration")
             return {}
         except json.JSONDecodeError as e:
-            logger.error(f"Invalid JSON in happ routing file: {e}")
+            logger.error(f"Invalid JSON in {client_name.lower()} routing file: {e}")
             return {}
         except OSError as e:
-            logger.error(f"Failed to load happ routing file: {e}")
-            return {}
-
-    def _load_incy_routing(self) -> dict:
-        """Load Incy routing configuration.
-
-        Returns:
-            Routing configuration dictionary
-        """
-        try:
-            with self.config.incy_routing_file.open("r", encoding="utf-8") as f:
-                data = json.load(f)
-                return data if isinstance(data, dict) else {}
-        except FileNotFoundError:
-            logger.info("Incy routing file not found, using empty configuration")
-            return {}
-        except json.JSONDecodeError as e:
-            logger.error(f"Invalid JSON in incy routing file: {e}")
-            return {}
-        except OSError as e:
-            logger.error(f"Failed to load incy routing file: {e}")
+            logger.error(f"Failed to load {client_name.lower()} routing file: {e}")
             return {}
 
 

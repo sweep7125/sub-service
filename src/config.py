@@ -113,6 +113,23 @@ class EnvConfig:
 
         return Path(value)
 
+    def resolve_path(self, key: str, default: str | Path, base_dir: Path | None = None) -> Path:
+        """Resolve absolute or base-dir-relative path from environment.
+
+        Args:
+            key: Environment variable name
+            default: Default path if not set
+            base_dir: Base directory for relative paths
+
+        Returns:
+            Resolved path
+        """
+        path = self.get_path(key, Path(default))
+        if path.is_absolute():
+            return path
+
+        return (base_dir or self.base_dir) / path
+
     def get_list(
         self, key: str, default: list[str] | None = None, separator: str = ","
     ) -> list[str]:
@@ -198,43 +215,33 @@ class EnvConfig:
     @property
     def cache_dir(self) -> Path:
         """Get cache directory."""
-        return self.get_path("SUBSTUB_CACHE_DIR") or Path("/var/cache/sub-stub")
+        return self.resolve_path("SUBSTUB_CACHE_DIR", "/var/cache/sub-stub")
 
     @property
     def servers_file(self) -> Path:
         """Get servers file path (unified format)."""
-        custom = self.get_str("SERVERS_FILE", "servers")
-        path = Path(custom)
-        return path if path.is_absolute() else self.base_dir / path
+        return self.resolve_path("SERVERS_FILE", "servers")
 
     @property
     def users_file(self) -> Path:
         """Get users file path."""
-        custom = self.get_str("USERS_FILE", "users")
-        path = Path(custom)
-        return path if path.is_absolute() else self.base_dir / path
+        return self.resolve_path("USERS_FILE", "users")
 
     @property
     def template_file(self) -> Path:
         """Get V2Ray URL template file path."""
         # Support legacy TEMPLATE_FILE env var
-        custom = self.get_str("TEMPLATE_FILE", "templates/v2ray-url-template.txt")
-        path = Path(custom)
-        return path if path.is_absolute() else self.base_dir / path
+        return self.resolve_path("TEMPLATE_FILE", "templates/v2ray-url-template.txt")
 
     @property
     def happ_routing_file(self) -> Path:
         """Get Happ routing file path."""
-        custom = self.get_str("HAPP_ROUTING_FILE", "happ.routing")
-        path = Path(custom)
-        return path if path.is_absolute() else self.base_dir / path
+        return self.resolve_path("HAPP_ROUTING_FILE", "happ.routing")
 
     @property
     def incy_routing_file(self) -> Path:
         """Get Incy routing file path."""
-        custom = self.get_str("INCY_ROUTING_FILE", "happ.routing")
-        path = Path(custom)
-        return path if path.is_absolute() else self.base_dir / path
+        return self.resolve_path("INCY_ROUTING_FILE", "incy.routing")
 
     # Cache settings
     @property

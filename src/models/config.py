@@ -60,14 +60,16 @@ class AppConfig:
 
         config = cls(
             base_dir=base_dir,
-            servers_file=env_config.servers_file,
-            users_file=env_config.users_file,
-            template_file=env_config.template_file,
+            servers_file=env_config.resolve_path("SERVERS_FILE", "servers", base_dir),
+            users_file=env_config.resolve_path("USERS_FILE", "users", base_dir),
+            template_file=env_config.resolve_path(
+                "TEMPLATE_FILE", "templates/v2ray-url-template.txt", base_dir
+            ),
             v2ray_template_file=v2ray_template,
             mihomo_template_file=mihomo_template,
-            happ_routing_file=env_config.happ_routing_file,
-            incy_routing_file=env_config.incy_routing_file,
-            cache_dir=env_config.cache_dir,
+            happ_routing_file=env_config.resolve_path("HAPP_ROUTING_FILE", "happ.routing", base_dir),
+            incy_routing_file=env_config.resolve_path("INCY_ROUTING_FILE", "incy.routing", base_dir),
+            cache_dir=env_config.resolve_path("SUBSTUB_CACHE_DIR", "/var/cache/sub-stub", base_dir),
             geo_cache_ttl=env_config.geo_cache_ttl,
         )
 

@@ -4,13 +4,20 @@ from typing import Final
 
 from .config import env_config
 
+
+def get_reserved_paths(secret_path: str | None = None) -> frozenset[str]:
+    """Build reserved spider-x paths from configured secret path."""
+    normalized = (secret_path if secret_path is not None else env_config.get_str("SECRET_PATH")).strip(
+        "/"
+    )
+    if not normalized:
+        return frozenset()
+
+    return frozenset({normalized, f"/{normalized}"})
+
+
 # Reserved paths that cannot be used as spider-x (includes secret path from env)
-RESERVED_PATHS: Final[frozenset[str]] = frozenset(
-    {
-        env_config.secret_path,
-        f"/{env_config.secret_path}",
-    }
-)
+RESERVED_PATHS: Final[frozenset[str]] = get_reserved_paths()
 
 # DNS placeholder strings
 DNS_PLACEHOLDERS: Final[frozenset[str]] = frozenset(

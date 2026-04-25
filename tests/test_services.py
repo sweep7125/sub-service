@@ -2,6 +2,8 @@
 
 from pathlib import Path
 
+import requests
+
 from src.models import AppConfig
 from src.services import ConfigService
 
@@ -136,3 +138,44 @@ class TestGeoFileService:
         # Should return base64-encoded header
         assert isinstance(header, str)
         assert header.startswith("happ://routing/onadd/") or header == ""
+
+    def test_check_updates_persists_etag(self, monkeypatch, temp_dir: Path):
+        """ETag updates should be written back to metadata."""
+        from src.services import geo_service as geo_service_module
+        from src.services.geo_service import GeoFileService
+
+        service = GeoFileService(cache_dir=temp_dir, cache_ttl=600)
+        saved_metadata = {}
+
+        monkeypatch.setattr(geo_service_module, "GEO_FILES_URLS", ["https://example.com/geo.dat"])
+        monkeypatch.setattr(service, "_save_metadata", lambda metadata: saved_metadata.update(metadata))
+
+        def fake_check_url(session, url, url_meta, now):
+            url_meta["etag"] = "etag-1"
+            return now
+
+        monkeypatch.setattr(service, "_check_url", fake_check_url)
+
+        timestamp = service._check_updates({}, 123)
+
+        assert timestamp == 123
+        assert saved_metadata["urls"]["https://example.com/geo.dat"]["etag"] == "etag-1"
+
+    def test_check_url_uses_previous_timestamp_on_request_error(self, temp_dir: Path):
+        """Request failures should keep previous timestamp."""
+        from src.services.geo_service import GeoFileService
+
+        service = GeoFileService(cache_dir=temp_dir, cache_ttl=600)
+
+        class FailingSession:
+            def get(self, *args, **kwargs):
+                raise requests.Timeout("timeout")
+
+        timestamp = service._check_url(
+            FailingSession(),
+            "https://example.com/geo.dat",
+            {"last_ts": 456},
+            789,
+        )
+
+        assert timestamp == 456

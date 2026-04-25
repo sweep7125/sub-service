@@ -129,22 +129,23 @@ class GeoFileService:
         Returns:
             Last updated timestamp
         """
-        session = requests.Session()
-        session.headers.update({"User-Agent": "happ-routing/1.0"})
-
         max_timestamp = int(metadata.get("last_updated", 0))
-        url_metadata = metadata.get("urls", {})
+        raw_url_metadata = metadata.get("urls")
+        url_metadata = raw_url_metadata if isinstance(raw_url_metadata, dict) else {}
 
-        # Check each geo file URL
-        for url in GEO_FILES_URLS:
-            timestamp = self._check_url(session, url, url_metadata.get(url, {}), now)
-            max_timestamp = max(max_timestamp, timestamp)
+        with requests.Session() as session:
+            session.headers.update({"User-Agent": "happ-routing/1.0"})
 
-            # Update URL metadata
-            url_metadata[url] = {
-                "last_ts": timestamp,
-                "etag": url_metadata.get(url, {}).get("etag"),
-            }
+            # Check each geo file URL
+            for url in GEO_FILES_URLS:
+                url_meta = url_metadata.get(url)
+                if not isinstance(url_meta, dict):
+                    url_meta = {}
+
+                timestamp = self._check_url(session, url, url_meta, now)
+                max_timestamp = max(max_timestamp, timestamp)
+                url_meta["last_ts"] = timestamp
+                url_metadata[url] = url_meta
 
         # Save updated metadata
         metadata["last_check"] = now

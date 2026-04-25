@@ -5,6 +5,8 @@ from unittest.mock import patch
 from src.models import AppConfig
 from src.web import _is_allowed_subscription_user_agent, create_app
 
+ALLOWED_BROWSER_UA = "Mozilla/5.0 Chrome/124.0.0.0"
+
 
 class TestWebApplication:
     """Tests for Flask web application."""
@@ -45,11 +47,11 @@ class TestWebApplication:
         client = app.test_client()
 
         with patch("src.web._is_secure_connection", return_value=True):
-            # user1 exists in sample data
-            response = client.get("/secret/user1")
+            response = client.get("/secret/user1", headers={"User-Agent": ALLOWED_BROWSER_UA})
 
-            # Should get some response (200 or 302 redirect on error)
-            assert response.status_code in (200, 302)
+            assert response.status_code == 200
+            assert response.mimetype == "application/json"
+            assert response.data.startswith(b"[")
 
     def test_mihomo_config_format(self, app_config: AppConfig):
         """Test requesting Mihomo format configuration."""
@@ -57,10 +59,29 @@ class TestWebApplication:
         client = app.test_client()
 
         with patch("src.web._is_secure_connection", return_value=True):
-            response = client.get("/secret/user1/config/mihomo")
+            response = client.get(
+                "/secret/user1/config/mihomo",
+                headers={"User-Agent": ALLOWED_BROWSER_UA},
+            )
 
-            # Should attempt to build config (200 or 302 on error)
-            assert response.status_code in (200, 302)
+            assert response.status_code == 200
+            assert response.mimetype == "application/yaml"
+            assert b"proxies:" in response.data
+
+    def test_direct_mihomo_format_alias(self, app_config: AppConfig):
+        """Test requesting Mihomo format via direct alias."""
+        app = create_app(app_config)
+        client = app.test_client()
+
+        with patch("src.web._is_secure_connection", return_value=True):
+            response = client.get(
+                "/secret/user1/mihomo",
+                headers={"User-Agent": ALLOWED_BROWSER_UA},
+            )
+
+            assert response.status_code == 200
+            assert response.mimetype == "application/yaml"
+            assert b"proxies:" in response.data
 
     def test_v2ray_config_format(self, app_config: AppConfig):
         """Test requesting V2Ray format configuration."""
@@ -68,10 +89,14 @@ class TestWebApplication:
         client = app.test_client()
 
         with patch("src.web._is_secure_connection", return_value=True):
-            response = client.get("/secret/user1/sub/v2ray")
+            response = client.get(
+                "/secret/user1/sub/v2ray",
+                headers={"User-Agent": ALLOWED_BROWSER_UA},
+            )
 
-            # Should attempt to build config (200 or 302 on error)
-            assert response.status_code in (200, 302)
+            assert response.status_code == 200
+            assert response.mimetype == "text/plain"
+            assert b"vless://" in response.data
 
     def test_json_config_format(self, app_config: AppConfig):
         """Test requesting JSON format configuration."""
@@ -79,10 +104,14 @@ class TestWebApplication:
         client = app.test_client()
 
         with patch("src.web._is_secure_connection", return_value=True):
-            response = client.get("/secret/user1/config/json")
+            response = client.get(
+                "/secret/user1/config/json",
+                headers={"User-Agent": ALLOWED_BROWSER_UA},
+            )
 
-            # Should attempt to build config (200 or 302 on error)
-            assert response.status_code in (200, 302)
+            assert response.status_code == 200
+            assert response.mimetype == "application/json"
+            assert response.data.startswith(b"[")
 
     def test_invalid_user_returns_404(self, app_config: AppConfig):
         """Test that invalid user returns 404."""
@@ -107,8 +136,7 @@ class TestWebApplication:
                 headers={"User-Agent": "Happ/4.7.1/ios/2604040141682"},
             )
 
-            # Should process request (200 or 302 on error)
-            assert response.status_code in (200, 302)
+            assert response.status_code == 200
 
     def test_x_forwarded_for_header(self, app_config: AppConfig):
         """Test X-Forwarded-For header processing."""
@@ -118,11 +146,13 @@ class TestWebApplication:
         with patch("src.web._is_secure_connection", return_value=True):
             response = client.get(
                 "/secret/user1",
-                headers={"X-Forwarded-For": "203.0.113.1"},
+                headers={
+                    "User-Agent": ALLOWED_BROWSER_UA,
+                    "X-Forwarded-For": "203.0.113.1",
+                },
             )
 
-            # Should process request (200 or 302 on error)
-            assert response.status_code in (200, 302)
+            assert response.status_code == 200
 
     def test_https_proxy_header(self, app_config: AppConfig):
         """Test HTTPS proxy headers."""
@@ -133,11 +163,13 @@ class TestWebApplication:
         with patch("src.web._is_secure_connection", return_value=True):
             response = client.get(
                 "/secret/user1",
-                headers={"X-Forwarded-Proto": "https"},
+                headers={
+                    "User-Agent": ALLOWED_BROWSER_UA,
+                    "X-Forwarded-Proto": "https",
+                },
             )
 
-            # Should process request (200 or 302 on error)
-            assert response.status_code in (200, 302)
+            assert response.status_code == 200
 
     def test_yandex_browser_user_agent_blocked(self, app_config: AppConfig):
         """Test that Yandex Browser is blocked by user-agent policy."""

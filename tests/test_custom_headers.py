@@ -154,12 +154,13 @@ class TestCustomHeaders:
         client = app.test_client()
 
         with patch("src.web._is_secure_connection", return_value=True):
-            response = client.get("/secret/user1")
+            response = client.get(
+                "/secret/user1",
+                headers={"User-Agent": "Mozilla/5.0 Chrome/124.0.0.0"},
+            )
 
-            # Check if we can access headers (response might be redirect)
-            if response.status_code == 200:
-                # Custom header should be present
-                assert "x-test-header" in response.headers or response.status_code in (200, 302)
+            assert response.status_code == 200
+            assert response.headers["x-test-header"] == "test-value"
 
     def test_user_agent_filtered_headers(self, app_config, monkeypatch):
         """Test that user-agent filtered headers are applied conditionally."""
@@ -185,15 +186,16 @@ class TestCustomHeaders:
             # Request with non-Happ user agent
             response1 = client.get(
                 "/secret/user1",
-                headers={"User-Agent": "Chrome/1.0"},
+                headers={"User-Agent": "Mozilla/5.0 Chrome/124.0.0.0"},
             )
 
             # Request with Happ user agent
             response2 = client.get(
                 "/secret/user1",
-                headers={"User-Agent": "Happ/1.0.0"},
+                headers={"User-Agent": "Happ/1.0.0/ios/1"},
             )
 
-            # Both should process successfully (200 or 302 redirect)
-            assert response1.status_code in (200, 302)
-            assert response2.status_code in (200, 302)
+            assert response1.status_code == 200
+            assert response2.status_code == 200
+            assert "x-happ-only" not in response1.headers
+            assert response2.headers["x-happ-only"] == "happ-value"

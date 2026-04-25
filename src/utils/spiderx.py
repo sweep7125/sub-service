@@ -5,10 +5,10 @@ import random
 import secrets
 
 from ..constants import (
-    RESERVED_PATHS,
     SPIDERX_CANDIDATES,
     SPIDERX_MAX_LENGTH,
     SPIDERX_MIN_LENGTH,
+    get_reserved_paths,
 )
 
 logger = logging.getLogger(__name__)
@@ -52,11 +52,12 @@ class SpiderXGenerator:
             self._used_paths.clear()
 
         # Try to generate unique path with maximum attempts
+        reserved_paths = get_reserved_paths()
         for _attempt in range(max_attempts):
             path = self._generate_candidate()
 
             # Ensure no collision with reserved or used paths
-            if path not in RESERVED_PATHS and path not in self._used_paths:
+            if path not in reserved_paths and path not in self._used_paths:
                 self._used_paths.add(path)
                 return path
 
